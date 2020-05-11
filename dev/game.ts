@@ -1,3 +1,5 @@
+let pixelWidth = 2;
+/// <reference path="player.ts"/>
 class Game {
     // Set game variables
     public currentScreen : any;
