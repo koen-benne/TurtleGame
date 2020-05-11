@@ -13,5 +13,5 @@ function vwToNum(vw : string) : number {
 }
 
 function toGrid(num : number) {
-    return Math.round(num / pixelWidth) * pixelWidth;
+    return Math.round(num / PIXEL_WIDTH) * PIXEL_WIDTH;
 }

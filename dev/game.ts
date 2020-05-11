@@ -1,4 +1,4 @@
-let pixelWidth = 2;
+const PIXEL_WIDTH = 2;
 /// <reference path="player.ts"/>
 class Game {
     public playerOne : Player = new Player();
