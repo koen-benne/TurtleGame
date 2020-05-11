@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-let pixelWidth = 2;
+const PIXEL_WIDTH = 2;
 class Game {
     constructor() {
         this.playerOne = new Player();
@@ -20,13 +20,13 @@ class Game {
         this.currentScene.update().then(() => requestAnimationFrame(() => this.gameLoop()));
     }
     onStart() {
-        this.setPlayScene();
+        this.setPlayScreen();
     }
-    setStartScene() {
+    setStartScreen() {
         document.body.innerHTML = "";
         this.currentScene = new StartScreen(this);
     }
-    setPlayScene() {
+    setPlayScreen() {
         document.body.innerHTML = "";
         this.currentScene = new PlayScreen(this);
     }
@@ -88,7 +88,7 @@ function vwToNum(vw) {
     return parseFloat(vw.slice(0, vw.length - 2));
 }
 function toGrid(num) {
-    return Math.round(num / pixelWidth) * pixelWidth;
+    return Math.round(num / PIXEL_WIDTH) * PIXEL_WIDTH;
 }
 class Player extends HTMLElement {
     constructor() {
@@ -167,6 +167,7 @@ class Player extends HTMLElement {
             throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'.";
         }
         this.id = id;
+        this.movementSpeed = 0.8;
         const style = this.style;
         style.position = "absolute";
         style.width = "10vw";
@@ -262,13 +263,12 @@ class Player extends HTMLElement {
     }
     movePlayer() {
         return __awaiter(this, void 0, void 0, function* () {
-            const movementSpeed = 0.8;
             let x = this.x;
             if (this.leftPressed) {
-                x -= movementSpeed;
+                x -= this.movementSpeed;
             }
             if (this.rightPressed) {
-                x += movementSpeed;
+                x += this.movementSpeed;
             }
             if (this.x != x) {
                 this.x = x;

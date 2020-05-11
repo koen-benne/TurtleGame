@@ -5,6 +5,8 @@ class Player extends HTMLElement {
 
     isExecutingAction : boolean = false;
 
+    private movementSpeed : number;
+
     private attackKey : string;
     private defendKey : string;
     private leftKey : string;
@@ -102,6 +104,8 @@ class Player extends HTMLElement {
         }
 
         this.id = id;
+
+        this.movementSpeed = 0.8;
 
         const style = this.style;
         style.position = "absolute";
@@ -202,13 +206,12 @@ class Player extends HTMLElement {
 
 
     public async movePlayer() {
-        const movementSpeed = 0.8;
         let x = this.x;
         if(this.leftPressed) {
-            x -= movementSpeed;
+            x -= this.movementSpeed;
         }
         if(this.rightPressed) {
-            x += movementSpeed;
+            x += this.movementSpeed;
         }
         if(this.x != x) {
             this.x = x;
