@@ -1,3 +1,4 @@
+let pixelWidth = 2;
 class Game {
     // Set game variables
     public currentScreen : any;
