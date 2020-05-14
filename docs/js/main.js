@@ -284,24 +284,26 @@ function toGrid(num) {
 }
 class PlayScreen {
     constructor(game) {
-        const background = document.createElement("background");
-        background.style.backgroundImage = "url('docs/img/Blue-dummy-texture.png')";
-        background.style.backgroundRepeat = "repeat";
-        background.style.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
-        background.style.width = "100%";
-        background.style.height = "100%";
-        background.style.position = "absolute";
-        game.appendChild(background);
         this.floorHeight = toGrid(6);
+        const background = document.createElement("background");
+        const backgroundStyle = background.style;
+        backgroundStyle.backgroundImage = "url('docs/img/Blue-dummy-texture.png')";
+        backgroundStyle.backgroundRepeat = "repeat";
+        backgroundStyle.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        backgroundStyle.width = "100%";
+        backgroundStyle.height = "100%";
+        backgroundStyle.position = "absolute";
+        game.appendChild(background);
         const floorHeight = this.floorHeight;
         const floor = document.createElement("floor");
-        floor.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-        floor.style.backgroundRepeat = "repeat";
-        floor.style.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
-        floor.style.position = "absolute";
-        floor.style.width = "100vw";
-        floor.style.height = floorHeight.toString() + "vw";
-        floor.style.bottom = "0";
+        const floorStyle = floor.style;
+        floorStyle.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+        floorStyle.backgroundRepeat = "repeat";
+        floorStyle.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        floorStyle.position = "absolute";
+        floorStyle.width = "100vw";
+        floorStyle.height = floorHeight.toString() + "vw";
+        floorStyle.bottom = "0";
         game.appendChild(floor);
         const playerOne = document.createElement("player-element", { is: "player-element" });
         const playerTwo = document.createElement("player-element", { is: "player-element" });
