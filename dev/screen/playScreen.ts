@@ -1,5 +1,5 @@
 /// <reference path="screenBase.ts"/>
-class PlayScreen extends ScreenBase {
+class PlayScreen implements ScreenBase {
     private playerOne : Player;
     private playerTwo : Player;
 

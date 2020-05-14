@@ -1,10 +1,5 @@
-abstract class ScreenBase {
-    protected game : Game;
+interface ScreenBase {
 
-    protected constructor(g: Game) {
-        this.game = g;
-    }
-
-    abstract update() : Promise<any>;
+    update() : void;
 
 }

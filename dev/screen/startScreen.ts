@@ -1,10 +1,10 @@
 /// <reference path="screenBase.ts"/>
-class StartScreen extends ScreenBase {
-    constructor(g: Game) {
-        super(g);
+class StartScreen implements ScreenBase {
+
+    constructor() {
     }
 
-    update(): Promise<any> {
-        return Promise.resolve(undefined);
+    public update() {
+
     }
 }
