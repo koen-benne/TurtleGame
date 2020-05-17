@@ -45,7 +45,7 @@ class PlayScreen implements ScreenBase {
         playerOne.y = floorHeight;
         playerTwo.y = floorHeight;
         playerOne.x = 10;
-        playerTwo.x = 80;
+        playerTwo.x = 85;
 
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
@@ -55,22 +55,113 @@ class PlayScreen implements ScreenBase {
     private movePlayers() {
         const playerOne = this.playerOne;
         const playerTwo = this.playerTwo;
-        // This specific method is necessary to not give one player an advantage (autism)
-        playerOne.moveX(playerTwo);
-        playerTwo.moveX(playerOne);
+        playerOne.calculateVelocity();
+        playerTwo.calculateVelocity();
 
-        let y1 = playerOne.getNewY();
-        let y2 = playerTwo.getNewY();
-        y1 = playerOne.formatY(y1, playerTwo, this.floorHeight);
-        y2 = playerTwo.formatY(y2, playerOne, this.floorHeight);
-        playerOne.y = y1;
-        playerTwo.y = y2;
+        const horizontalVelocity1 = this.formatHorizontalVelocity(playerOne, playerTwo);
+        const horizontalVelocity2 = this.formatHorizontalVelocity(playerTwo, playerOne);
+        const verticalVelocity1 = this.formatVerticalVelocity(playerOne, playerTwo);
+        const verticalVelocity2 = this.formatVerticalVelocity(playerTwo, playerOne);
+
+        playerOne.horizontalVelocity = horizontalVelocity1;
+        playerTwo.horizontalVelocity = horizontalVelocity2;
+        playerOne.verticalVelocity = verticalVelocity1;
+        playerTwo.verticalVelocity = verticalVelocity2;
+
+        playerOne.applyVelocity();
+        playerTwo.applyVelocity();
+    }
+
+    public formatHorizontalVelocity(thisPlayer : Player, opponent : Player) : number {
+        let thisPlayerVelocity : number = thisPlayer.horizontalVelocity;
+        let opponentVelocity : number = opponent.horizontalVelocity;
+
+        let isLeftPlayer : boolean;
+
+        if (thisPlayer.id == 'player-one') {
+            isLeftPlayer = (thisPlayer.x <= opponent.x);
+        } else {
+            isLeftPlayer = (thisPlayer.x < opponent.x);
+        }
+
+        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
+        const opponentHeight = vwToNum(opponent.style.height);
+        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
+        const opponentWidth = vwToNum(opponent.style.width);
+
+        if (thisPlayer.x + thisPlayerVelocity < 0) {
+            thisPlayerVelocity = 0 - thisPlayer.x
+        } else if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > 100) {
+            thisPlayerVelocity = 100 - thisPlayer.x - thisPlayerWidth
+        }
+        if (opponent.x + opponentVelocity < 0) {
+            opponentVelocity = 0 - opponent.x
+        } else if (opponent.x + opponentWidth + opponentVelocity > 100) {
+            opponentVelocity = 100 - opponent.x - opponentWidth
+        }
+
+        if (thisPlayer.y + thisPlayerHeight > opponent.y && opponent.y + opponentHeight > thisPlayer.y) { // Only necessary if players are next to each other
+
+            if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > opponent.x + opponentVelocity &&
+                opponent.x + opponentWidth + opponentVelocity > thisPlayer.x + thisPlayerVelocity) { // Prevents infinite number due to dividing by zero
+
+                let distance : number;
+                if (isLeftPlayer) {
+                    distance = opponent.x - (thisPlayer.x + thisPlayerWidth);
+                } else {
+                    distance = (opponent.x + opponentWidth) - thisPlayer.x;
+                }
+
+                if (thisPlayerVelocity == opponentVelocity) {
+                    if (isLeftPlayer) {
+                        thisPlayerVelocity += distance / 2;
+                        opponentVelocity += distance / 2;
+                    } else {
+                        thisPlayerVelocity += distance / 2;
+                        opponentVelocity += distance / 2;
+                    }
+                } else {
+                    thisPlayerVelocity = thisPlayerVelocity / (thisPlayerVelocity - opponentVelocity) * distance;
+                }
+            }
+        }
+
+        return thisPlayerVelocity;
+    }
+
+    public formatVerticalVelocity(thisPlayer : Player, opponent : Player) : number {
+        let thisPlayerVelocity : number = thisPlayer.verticalVelocity;
+        let opponentVelocity : number = opponent.verticalVelocity;
+
+        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
+        const opponentHeight = vwToNum(opponent.style.height);
+        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
+        const opponentWidth = vwToNum(opponent.style.width);
+
+        thisPlayer.isOnGround = false;
+
+        // Stop at floor
+        if (thisPlayer.y + thisPlayerVelocity < this.floorHeight) {
+            thisPlayer.isOnGround = true;
+            thisPlayerVelocity = this.floorHeight - thisPlayer.y;
+        } if (opponent.y + opponentVelocity < this.floorHeight) {
+            opponentVelocity = this.floorHeight - opponent.y;
+        }
+
+        if (thisPlayer.x + thisPlayerWidth > opponent.x && opponent.x + opponentWidth > thisPlayer.x) {
+            if (thisPlayer.y + thisPlayerVelocity < opponent.y + opponentHeight + opponentVelocity && thisPlayer.y > opponent.y) {
+                if (opponent.isOnGround) {
+                    thisPlayer.isOnGround = true;
+                }
+                thisPlayerVelocity = opponent.y + opponentHeight + (opponentVelocity * 1.01) - thisPlayer.y;
+            }
+        }
+
+        return thisPlayerVelocity;
     }
 
     // Update the screen
     public update() {
-        this.playerOne.calculateVelocity();
-        this.playerTwo.calculateVelocity();
         this.playerOne.executePlayerAction();
         this.playerTwo.executePlayerAction();
 

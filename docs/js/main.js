@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const PIXEL_WIDTH = 0.5;
 const GRAVITY_PER_FRAME = 0.1;
+const FRICTION = 0.4;
 let gameHeightInVw;
 class Game {
     constructor() {
@@ -52,8 +53,10 @@ class Player extends HTMLElement {
     constructor() {
         super();
         this.isExecutingAction = false;
-        this.isOnSurface = false;
+        this.movementSpeed = 0.3;
         this.jumpStrength = 1.8;
+        this.isOnGround = false;
+        this.horizontalVelocity = 0;
         this.verticalVelocity = 0;
         this.attackKeyPressed = 0;
         this.defendKeyPressed = 0;
@@ -72,7 +75,6 @@ class Player extends HTMLElement {
             throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'.";
         }
         this.id = id;
-        this.movementSpeed = 0.8;
         const style = this.style;
         style.position = "absolute";
         style.width = "5vw";
@@ -172,15 +174,20 @@ class Player extends HTMLElement {
         });
     }
     calculateVelocity() {
-        if (!this.isOnSurface) {
-            this.verticalVelocity -= GRAVITY_PER_FRAME;
+        this.horizontalVelocity -= FRICTION * this.horizontalVelocity;
+        if (this.leftPressed) {
+            this.horizontalVelocity += -this.movementSpeed;
         }
-        else if (this.upPressed) {
+        if (this.rightPressed) {
+            this.horizontalVelocity += this.movementSpeed;
+        }
+        if ((this.horizontalVelocity < 0.01 && this.horizontalVelocity > 0) || (this.horizontalVelocity > -0.01 && this.horizontalVelocity < 0)) {
+            this.horizontalVelocity = 0;
+        }
+        this.verticalVelocity -= GRAVITY_PER_FRAME;
+        if (this.upPressed && this.isOnGround) {
+            this.isOnGround = false;
             this.verticalVelocity = this.jumpStrength;
-            this.isOnSurface = false;
-        }
-        else {
-            this.verticalVelocity = 0;
         }
     }
     executePlayerAction() {
@@ -201,71 +208,9 @@ class Player extends HTMLElement {
             }
         }
     }
-    formatX(x, opponent) {
-        const width = vwToNum(this.style.width);
-        const opponentWidth = vwToNum(opponent.style.width);
-        const height = vwToNum(this.style.height);
-        if (!(opponent.y - this.y >= height) && !(this.y - opponent.y >= vwToNum(opponent.style.height)) &&
-            !(this.y - opponent.y - vwToNum(opponent.style.height) >= this.verticalVelocity - opponent.verticalVelocity) &&
-            !(opponent.y - this.y - height >= opponent.verticalVelocity - this.verticalVelocity)) {
-            if (opponent.x + opponentWidth > x && opponent.x <= x) {
-                x = opponent.x + opponentWidth;
-            }
-            else if (x + width > opponent.x && x <= opponent.x) {
-                x = opponent.x - width;
-            }
-        }
-        if ((100 - x - width) < 0) {
-            x = 100 - width;
-        }
-        else if (x < 0) {
-            x = 0;
-        }
-        return x;
-    }
-    formatY(y, opponent, floorHeight) {
-        const width = vwToNum(this.style.width);
-        const opponentHeight = opponent.style.height;
-        const height = vwToNum(this.style.height);
-        this.isOnSurface = false;
-        if (!(opponent.x - this.x >= width) && !(this.x - opponent.x >= vwToNum(opponent.style.width))) {
-            if (opponent.y + vwToNum(opponentHeight) > y && opponent.y < y) {
-                if (opponent.isOnSurface) {
-                    this.isOnSurface = true;
-                }
-                y = opponent.y + vwToNum(opponentHeight);
-            }
-            else if (y + height > opponent.y && y <= opponent.y) {
-                opponent.isOnSurface = false;
-                this.verticalVelocity /= 2;
-                opponent.verticalVelocity = this.verticalVelocity;
-                y = (this.y - y) / 2 + this.y;
-            }
-        }
-        if (y <= floorHeight) {
-            y = floorHeight;
-            this.isOnSurface = true;
-        }
-        else if (y + height >= gameHeightInVw) {
-            this.verticalVelocity = 0;
-            y = gameHeightInVw - height;
-        }
-        return y;
-    }
-    moveX(opponent) {
-        let x = this.x;
-        if (this.leftPressed) {
-            x -= this.movementSpeed;
-        }
-        if (this.rightPressed) {
-            x += this.movementSpeed;
-        }
-        if (this.x != x) {
-            this.x = this.formatX(x, opponent);
-        }
-    }
-    getNewY() {
-        return this.y + this.verticalVelocity;
+    applyVelocity() {
+        this.x += this.horizontalVelocity;
+        this.y += this.verticalVelocity;
     }
 }
 customElements.define('player-element', Player);
@@ -312,25 +257,105 @@ class PlayScreen {
         playerOne.y = floorHeight;
         playerTwo.y = floorHeight;
         playerOne.x = 10;
-        playerTwo.x = 80;
+        playerTwo.x = 85;
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
     }
     movePlayers() {
         const playerOne = this.playerOne;
         const playerTwo = this.playerTwo;
-        playerOne.moveX(playerTwo);
-        playerTwo.moveX(playerOne);
-        let y1 = playerOne.getNewY();
-        let y2 = playerTwo.getNewY();
-        y1 = playerOne.formatY(y1, playerTwo, this.floorHeight);
-        y2 = playerTwo.formatY(y2, playerOne, this.floorHeight);
-        playerOne.y = y1;
-        playerTwo.y = y2;
+        playerOne.calculateVelocity();
+        playerTwo.calculateVelocity();
+        const horizontalVelocity1 = this.formatHorizontalVelocity(playerOne, playerTwo);
+        const horizontalVelocity2 = this.formatHorizontalVelocity(playerTwo, playerOne);
+        const verticalVelocity1 = this.formatVerticalVelocity(playerOne, playerTwo);
+        const verticalVelocity2 = this.formatVerticalVelocity(playerTwo, playerOne);
+        playerOne.horizontalVelocity = horizontalVelocity1;
+        playerTwo.horizontalVelocity = horizontalVelocity2;
+        playerOne.verticalVelocity = verticalVelocity1;
+        playerTwo.verticalVelocity = verticalVelocity2;
+        playerOne.applyVelocity();
+        playerTwo.applyVelocity();
+    }
+    formatHorizontalVelocity(thisPlayer, opponent) {
+        let thisPlayerVelocity = thisPlayer.horizontalVelocity;
+        let opponentVelocity = opponent.horizontalVelocity;
+        let isLeftPlayer;
+        if (thisPlayer.id == 'player-one') {
+            isLeftPlayer = (thisPlayer.x <= opponent.x);
+        }
+        else {
+            isLeftPlayer = (thisPlayer.x < opponent.x);
+        }
+        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
+        const opponentHeight = vwToNum(opponent.style.height);
+        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
+        const opponentWidth = vwToNum(opponent.style.width);
+        if (thisPlayer.x + thisPlayerVelocity < 0) {
+            thisPlayerVelocity = 0 - thisPlayer.x;
+        }
+        else if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > 100) {
+            thisPlayerVelocity = 100 - thisPlayer.x - thisPlayerWidth;
+        }
+        if (opponent.x + opponentVelocity < 0) {
+            opponentVelocity = 0 - opponent.x;
+        }
+        else if (opponent.x + opponentWidth + opponentVelocity > 100) {
+            opponentVelocity = 100 - opponent.x - opponentWidth;
+        }
+        if (thisPlayer.y + thisPlayerHeight > opponent.y && opponent.y + opponentHeight > thisPlayer.y) {
+            if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > opponent.x + opponentVelocity &&
+                opponent.x + opponentWidth + opponentVelocity > thisPlayer.x + thisPlayerVelocity) {
+                let distance;
+                if (isLeftPlayer) {
+                    distance = opponent.x - (thisPlayer.x + thisPlayerWidth);
+                }
+                else {
+                    distance = (opponent.x + opponentWidth) - thisPlayer.x;
+                }
+                if (thisPlayerVelocity == opponentVelocity) {
+                    if (isLeftPlayer) {
+                        thisPlayerVelocity += distance / 2;
+                        opponentVelocity += distance / 2;
+                    }
+                    else {
+                        thisPlayerVelocity += distance / 2;
+                        opponentVelocity += distance / 2;
+                    }
+                }
+                else {
+                    thisPlayerVelocity = thisPlayerVelocity / (thisPlayerVelocity - opponentVelocity) * distance;
+                }
+            }
+        }
+        return thisPlayerVelocity;
+    }
+    formatVerticalVelocity(thisPlayer, opponent) {
+        let thisPlayerVelocity = thisPlayer.verticalVelocity;
+        let opponentVelocity = opponent.verticalVelocity;
+        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
+        const opponentHeight = vwToNum(opponent.style.height);
+        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
+        const opponentWidth = vwToNum(opponent.style.width);
+        thisPlayer.isOnGround = false;
+        if (thisPlayer.y + thisPlayerVelocity < this.floorHeight) {
+            thisPlayer.isOnGround = true;
+            thisPlayerVelocity = this.floorHeight - thisPlayer.y;
+        }
+        if (opponent.y + opponentVelocity < this.floorHeight) {
+            opponentVelocity = this.floorHeight - opponent.y;
+        }
+        if (thisPlayer.x + thisPlayerWidth > opponent.x && opponent.x + opponentWidth > thisPlayer.x) {
+            if (thisPlayer.y + thisPlayerVelocity < opponent.y + opponentHeight + opponentVelocity && thisPlayer.y > opponent.y) {
+                if (opponent.isOnGround) {
+                    thisPlayer.isOnGround = true;
+                }
+                thisPlayerVelocity = opponent.y + opponentHeight + (opponentVelocity * 1.01) - thisPlayer.y;
+            }
+        }
+        return thisPlayerVelocity;
     }
     update() {
-        this.playerOne.calculateVelocity();
-        this.playerTwo.calculateVelocity();
         this.playerOne.executePlayerAction();
         this.playerTwo.executePlayerAction();
         this.movePlayers();

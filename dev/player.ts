@@ -4,12 +4,14 @@ class Player extends HTMLElement {
     private facingRight : boolean;
 
     private isExecutingAction : boolean = false;
-    private isOnSurface : boolean = false;
 
-    public movementSpeed : number;
+    public movementSpeed : number = 0.3;
     private jumpStrength : number = 1.8;
 
-    private verticalVelocity : number = 0;
+    public isOnGround : boolean = false;
+
+    horizontalVelocity : number = 0;
+    verticalVelocity : number = 0;
 
     private attackKey : string;
     private defendKey : string;
@@ -41,9 +43,6 @@ class Player extends HTMLElement {
 
         // Set id
         this.id = id;
-
-        // Set movement speed
-        this.movementSpeed = 0.8;
 
         // Initialize player HTML Element
         const style = this.style;
@@ -163,15 +162,26 @@ class Player extends HTMLElement {
 
     // Calculates velocity
     public calculateVelocity() : void {
-        if (!this.isOnSurface) {
-            this.verticalVelocity -= GRAVITY_PER_FRAME;
-        } else if (this.upPressed) {
+        // Horizontal
+        this.horizontalVelocity -= FRICTION * this.horizontalVelocity;
+        if(this.leftPressed) {
+            this.horizontalVelocity += -this.movementSpeed;
+        }
+        if(this.rightPressed) {
+            this.horizontalVelocity += this.movementSpeed;
+        }
+        if ((this.horizontalVelocity < 0.01 && this.horizontalVelocity > 0) || (this.horizontalVelocity > -0.01 && this.horizontalVelocity < 0)) {
+            this.horizontalVelocity = 0;
+        }
+
+        // Vertical
+        this.verticalVelocity -= GRAVITY_PER_FRAME;
+        if (this.upPressed && this.isOnGround) {
+            this.isOnGround = false;
             this.verticalVelocity = this.jumpStrength;
-            this.isOnSurface = false;
-        } else {
-            this.verticalVelocity = 0;
         }
     }
+
 
     // Executes the player actions
     public executePlayerAction() : void {
@@ -193,89 +203,12 @@ class Player extends HTMLElement {
         }
     }
 
-
-    // Alters x value so that it does not pass through other objects
-    public formatX(x : number, opponent : Player) : number {
-        const width = vwToNum(this.style.width);
-        const opponentWidth = vwToNum(opponent.style.width);
-        const height = vwToNum(this.style.height);
-
-        if (!(opponent.y - this.y >= height) && !(this.y - opponent.y >= vwToNum(opponent.style.height)) &&
-            !(this.y - opponent.y - vwToNum(opponent.style.height) >= this.verticalVelocity - opponent.verticalVelocity) &&
-            !(opponent.y - this.y - height >= opponent.verticalVelocity - this.verticalVelocity)) {
-
-            if (opponent.x + opponentWidth > x && opponent.x <= x) {
-                x = opponent.x + opponentWidth;
-            } else if (x + width > opponent.x && x <= opponent.x) {
-                x = opponent.x - width;
-            }
-
-        }
-
-        // Make sure the player never goes off screen
-        if((100 - x - width) < 0) {
-            x = 100 - width;
-        } else if(x < 0) {
-            x = 0;
-        }
-
-        return x;
-    }
-
-    // Alters y value so that it does not pass through other objects
-    public formatY(y : number, opponent : Player, floorHeight : number) : number {
-        const width = vwToNum(this.style.width);
-        const opponentHeight = opponent.style.height;
-        const height = vwToNum(this.style.height);
-
-        this.isOnSurface = false;
-        if (!(opponent.x - this.x >= width) && !(this.x - opponent.x >= vwToNum(opponent.style.width))) {
-            if (opponent.y + vwToNum(opponentHeight) > y && opponent.y < y) {
-                if (opponent.isOnSurface) {
-                    this.isOnSurface = true;
-                }
-                y = opponent.y + vwToNum(opponentHeight);
-            } else if (y + height > opponent.y && y <= opponent.y) {
-                opponent.isOnSurface = false;
-                this.verticalVelocity /= 2;
-                opponent.verticalVelocity = this.verticalVelocity;
-                y = (this.y - y) / 2 + this.y;
-            }
-        }
-
-        if(y <= floorHeight) {
-            y = floorHeight;
-            this.isOnSurface = true;
-        } else if (y + height >= gameHeightInVw) {
-            this.verticalVelocity = 0;
-            y = gameHeightInVw - height;
-        }
-
-        return y;
-    }
-
-    // Moves x value of player (no proper physics yet)
-    public moveX(opponent : Player) : void {
-        let x = this.x;
-        if(this.leftPressed) {
-            x -= this.movementSpeed;
-        }
-        if(this.rightPressed) {
-            x += this.movementSpeed;
-        }
-        if(this.x != x) {
-            this.x = this.formatX(x, opponent);
-        }
-    }
-
-    // Returns the new un-formatted y value
-    public getNewY() : number {
-        return this.y + this.verticalVelocity;
+    public applyVelocity() : void {
+        this.x += this.horizontalVelocity;
+        this.y += this.verticalVelocity;
     }
 
 
 }
 // @ts-ignore
 customElements.define('player-element', Player); // Custom element name MUST contain a hyphen!!!
-
-

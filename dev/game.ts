@@ -1,5 +1,6 @@
 const PIXEL_WIDTH = 0.5;
 const GRAVITY_PER_FRAME = 0.1;
+const FRICTION = 0.4;
 let gameHeightInVw : number;
 /// <reference path="player.ts"/>
 class Game {
