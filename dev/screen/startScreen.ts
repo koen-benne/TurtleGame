@@ -1,5 +1,5 @@
 class StartScreen {
-    constructor(g: Game) {
+    constructor(g: HTMLElement) {
 
     }
 }

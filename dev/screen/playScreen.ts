@@ -1,5 +1,5 @@
 class PlayScreen {
-    constructor(g: Game) {
+    constructor(game: HTMLElement) {
 
     }
 }
