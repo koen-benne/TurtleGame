@@ -10,3 +10,9 @@ canvas {
     top: 10px;
     left: 10px;
   }
+  #brushWidth {
+      position: absolute;
+      top: 40px;
+      left: 10px;
+      width: 46px;      
+  }

@@ -1,6 +1,6 @@
 // Brush colour and size
 let colour = "#3d34a5";
-const strokeWidth = 25;
+let strokeWidth = 25;
 
 // Drawing state
 let latestPoint;
@@ -31,6 +31,7 @@ const continueStroke = newPoint => {
 
 const startStroke = point => {
   colour = document.getElementById("colourInput").value;
+  strokeWidth = document.getElementById("brushWidth").value;
   drawing = true;
   latestPoint = point;
 };
