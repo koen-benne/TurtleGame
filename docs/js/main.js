@@ -1,10 +1,9 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -18,10 +17,6 @@ class Game {
         const style = this.gameElement.style;
         style.width = "100vw";
         style.height = "50vw";
-        style.backgroundColor = "black";
-        style.position = "fixed";
-        style.imageRendering = "pixelated";
-        style.margin = "0";
         document.body.appendChild(this.gameElement);
         window.addEventListener("resize", () => this.setWindowHeight());
         this.setWindowHeight();
@@ -33,7 +28,11 @@ class Game {
         requestAnimationFrame(() => this.gameLoop());
     }
     onStart() {
-        this.setPlayScreen();
+        this.setShieldScreen();
+    }
+    setShieldScreen() {
+        this.gameElement.innerHTML = "";
+        this.currentScene = new ShieldScreen(this);
     }
     setStartScreen() {
         this.gameElement.innerHTML = "";
@@ -359,6 +358,25 @@ class PlayScreen {
         this.playerOne.executePlayerAction();
         this.playerTwo.executePlayerAction();
         this.movePlayers();
+    }
+}
+class ShieldScreen {
+    constructor(g) {
+        this.game = g;
+        this.canvas = document.createElement("canvas");
+        document.body.appendChild(this.canvas);
+        this.canvas.id = "canvas";
+        this.canvas.height = 450;
+        this.canvas.width = 400;
+        this.input = document.createElement("input");
+        document.body.appendChild(this.input);
+        this.input.type = "color";
+        this.input.id = "colourInput";
+        this.input.value = "#3d34a5";
+        this.script = document.createElement("script");
+        document.body.appendChild(this.script);
+        this.script.src = "docs/js/shield.js";
+        this.script.defer = true;
     }
 }
 class StartScreen {

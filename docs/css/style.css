@@ -2,3 +2,11 @@ body {
     overflow: hidden;
     margin: 0;
 }
+canvas {
+    border: 2px solid black;
+  }
+  #colourInput {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+  }
