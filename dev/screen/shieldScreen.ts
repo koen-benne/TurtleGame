@@ -1,7 +1,8 @@
 class ShieldScreen {
     private game : Game
     private canvas : HTMLCanvasElement
-    private input : HTMLInputElement
+    private color : HTMLInputElement
+    private width : HTMLInputElement
     private script : HTMLScriptElement
 
     constructor(g : Game) {
@@ -12,12 +13,18 @@ class ShieldScreen {
             this.canvas.id = "canvas";
             this.canvas.height = 450;
             this.canvas.width = 400;
-        //creating input
-            this.input = document.createElement("input");
-            document.body.appendChild(this.input);
-            this.input.type = "color";
-            this.input.id = "colourInput";
-            this.input.value = "#3d34a5";
+        //creating color
+            this.color = document.createElement("input");
+            document.body.appendChild(this.color);
+            this.color.type = "color";
+            this.color.id = "colourInput";
+            this.color.value = "#3d34a5";
+        //creating width
+            this.width = document.createElement("input");
+            document.body.appendChild(this.width);
+            this.width.type = "number";
+            this.width.id = "brushWidth"
+            this.width.value = "25";
         //creating script tags
             this.script = document.createElement("script");
             document.body.appendChild(this.script);

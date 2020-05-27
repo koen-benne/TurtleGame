@@ -17,7 +17,7 @@ class Game {
         
         // style.position = "fixed";
        
-        // style.margin = "0";
+        style.margin = "0";
         document.body.appendChild(this.gameElement);
 
         window.addEventListener("resize", () => this.setWindowHeight());
