@@ -5,7 +5,7 @@ class Game {
 
     // Constructor
     constructor() {
-        this.onStart();
+        this.setShieldScreen();
         this.gameLoop();
     }
 
@@ -17,6 +17,11 @@ class Game {
 
     private onStart() {
 
+    }
+
+    public setShieldScreen(){
+        document.body.innerHTML = "";
+        this.currentScreen = new ShieldScreen(this);
     }
 
     public setStartScreen() {
