@@ -8,11 +8,17 @@ class ConvexHitbox extends HitboxBase {
         super(displayable, player);
 
         this.vectors = vectors;
+
+        if (displayable) {
+            const game: HTMLElement = <HTMLElement>document.getElementsByTagName("game")[0];
+            this.element.setAttribute("height", "1000");
+            this.element.setAttribute("width", ((this.maxX + this.minX) / 100 * game.offsetWidth).toString());
+        }
     }
 
     public display() {
         if (this.displayable) {
-            this.element = this.createPolygon();
+            this.createPolygon();
             this.displayable = false;
         }
     }

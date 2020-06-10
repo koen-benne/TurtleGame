@@ -55,13 +55,13 @@ class Player extends HTMLElement {
         // Set id
         this.id = id;
 
-        this.hitbox = new ConvexHitbox(true,[
+        this.hitbox = new ConvexHitbox(false,[
             new Vector2(0, 0),
-            new Vector2(0, 15),
-            new Vector2(2, 18),
-            new Vector2(7, 18),
-            new Vector2(9, 15),
-            new Vector2(9, 0),
+            new Vector2(0, 13),
+            new Vector2(2, 17.5),
+            new Vector2(6.5, 17.5),
+            new Vector2(8.5, 13),
+            new Vector2(8.5, 0),
         ], this);
 
         // Initialize player HTML Element
@@ -71,7 +71,7 @@ class Player extends HTMLElement {
         style.position = "absolute";
         style.backgroundImage = "url('docs/img/Turtle1.png')";
         style.backgroundRepeat = "no-repeat"
-        style.backgroundSize = "100% 100%";
+        style.backgroundSize = "100% 101%";
 
         // Set keys
         this.attackKey = attackKey;
@@ -112,6 +112,7 @@ class Player extends HTMLElement {
 
         this.style.bottom = this.position.y.toString() + "vw";
 
+        this.hitbox.flip(this.facingRight);
         if (this.facingRight) {
             this.style.transform = "scaleX(1)";
         } else {

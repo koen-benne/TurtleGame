@@ -12,19 +12,26 @@ abstract class HitboxBase {
             this.element = document.createElement("canvas");
 
             this.element.style.background = "none";
-            this.element.setAttribute("height", "2000")
-            this.element.setAttribute("width", "2000")
 
             player.appendChild(this.element);
         }
     }
 
+    public flip(isFacingRight : boolean) : void {
+        if (this.displayable) {
+            if (isFacingRight) {
+                this.element.style.transform = "scaleX(1)";
+            } else {
+                this.element.style.transform = "scaleX(-1)";
+            }
+        }
+    }
 
     protected createPolygon() : any {
         const ctx = this.element.getContext("2d");
 
         const game : HTMLElement = <HTMLElement>document.getElementsByTagName("game")[0];
-        const playerHeight : number = this.player.clientHeight
+        const playerHeight : number = this.player.clientHeight;
 
         if (ctx !== null) {
             ctx.lineWidth = 2

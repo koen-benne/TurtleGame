@@ -71,10 +71,15 @@ class CollisionDetection {
                     }
                 }
             }
-            console.log(normal);
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
+            }
+            else if (normal.y == 1) {
+                playerTwo.isOnGround = true;
+            }
+            else if (normal.y == -1) {
+                playerOne.isOnGround = true;
             }
             const s = Math.sqrt(1 + normal.y * normal.y);
             const x = (overlap * normal.x / s) / 2;
@@ -109,6 +114,14 @@ class CollisionDetection {
             }
             playerOne.velocity.add(addVelocityOne);
             playerTwo.velocity.add(addVelocityTwo);
+        }
+        else {
+            if (currentHitboxOne.minY > screen.floorHeight) {
+                playerOne.isOnGround = false;
+            }
+            if (currentHitboxTwo.minY > screen.floorHeight) {
+                playerTwo.isOnGround = false;
+            }
         }
     }
 }
@@ -181,13 +194,13 @@ class Player extends HTMLElement {
             throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'.";
         }
         this.id = id;
-        this.hitbox = new ConvexHitbox(true, [
+        this.hitbox = new ConvexHitbox(false, [
             new Vector2(0, 0),
-            new Vector2(0, 15),
-            new Vector2(2, 18),
-            new Vector2(7, 18),
-            new Vector2(9, 15),
-            new Vector2(9, 0),
+            new Vector2(0, 13),
+            new Vector2(2, 17.5),
+            new Vector2(6.5, 17.5),
+            new Vector2(8.5, 13),
+            new Vector2(8.5, 0),
         ], this);
         this.width = 9;
         this.height = 18;
@@ -195,7 +208,7 @@ class Player extends HTMLElement {
         style.position = "absolute";
         style.backgroundImage = "url('docs/img/Turtle1.png')";
         style.backgroundRepeat = "no-repeat";
-        style.backgroundSize = "100% 100%";
+        style.backgroundSize = "100% 101%";
         this.attackKey = attackKey;
         this.defendKey = defendKey;
         this.upKey = upKey;
@@ -220,6 +233,7 @@ class Player extends HTMLElement {
     render() {
         this.style.left = this.position.x.toString() + "vw";
         this.style.bottom = this.position.y.toString() + "vw";
+        this.hitbox.flip(this.facingRight);
         if (this.facingRight) {
             this.style.transform = "scaleX(1)";
         }
@@ -381,9 +395,17 @@ class HitboxBase {
         if (displayable) {
             this.element = document.createElement("canvas");
             this.element.style.background = "none";
-            this.element.setAttribute("height", "2000");
-            this.element.setAttribute("width", "2000");
             player.appendChild(this.element);
+        }
+    }
+    flip(isFacingRight) {
+        if (this.displayable) {
+            if (isFacingRight) {
+                this.element.style.transform = "scaleX(1)";
+            }
+            else {
+                this.element.style.transform = "scaleX(-1)";
+            }
         }
     }
     createPolygon() {
@@ -465,10 +487,15 @@ class ConvexHitbox extends HitboxBase {
     constructor(displayable, vectors, player) {
         super(displayable, player);
         this.vectors = vectors;
+        if (displayable) {
+            const game = document.getElementsByTagName("game")[0];
+            this.element.setAttribute("height", "1000");
+            this.element.setAttribute("width", ((this.maxX + this.minX) / 100 * game.offsetWidth).toString());
+        }
     }
     display() {
         if (this.displayable) {
-            this.element = this.createPolygon();
+            this.createPolygon();
             this.displayable = false;
         }
     }

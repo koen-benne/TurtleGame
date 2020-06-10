@@ -88,12 +88,15 @@ abstract class CollisionDetection {
                 }
 
             }
-            console.log(normal)
 
             // Invert normal if player is on the other side, but don't invert if normal is straight up or down
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
+            } else if (normal.y == 1) { // Give players ability to jump off of one another
+                playerTwo.isOnGround = true;
+            } else if (normal.y == -1) {
+                playerOne.isOnGround = true;
             }
 
             // Set additional velocity
@@ -141,6 +144,14 @@ abstract class CollisionDetection {
             // Add new velocities
             playerOne.velocity.add(addVelocityOne);
             playerTwo.velocity.add(addVelocityTwo);
+        }
+        else {
+            if (currentHitboxOne.minY > screen.floorHeight) {
+                playerOne.isOnGround = false;
+            }
+            if (currentHitboxTwo.minY > screen.floorHeight) {
+                playerTwo.isOnGround = false;
+            }
         }
     }
 }
