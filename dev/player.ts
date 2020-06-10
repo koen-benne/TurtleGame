@@ -1,17 +1,21 @@
 class Player extends HTMLElement {
-    private realX : number;
-    private realY : number;
+    public hitbox : HitboxBase;
+
+    public position : Vector2 = new Vector2(0, 0);
+
+    public maxHealth : number;
+    public health : number;
+
     private facingRight : boolean;
 
     private isExecutingAction : boolean = false;
 
     public movementSpeed : number = 0.3;
-    private jumpStrength : number = 1.8;
+    private jumpStrength : number = 2.2;
 
     public isOnGround : boolean = false;
 
-    horizontalVelocity : number = 0;
-    verticalVelocity : number = 0;
+    public velocity : Vector2 = new Vector2(0, 0);
 
     private attackKey : string;
     private defendKey : string;
@@ -30,7 +34,14 @@ class Player extends HTMLElement {
         super();
     }
 
-    public init(attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, game : HTMLElement) {
+    public get newPosition() : Vector2 {
+        return Vector2.add(this.position, this.velocity)
+    }
+
+    public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, game : HTMLElement) {
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
+
         // Set orientation
         if(facing === "right") {
             this.facingRight = true;
@@ -44,14 +55,23 @@ class Player extends HTMLElement {
         // Set id
         this.id = id;
 
+        this.hitbox = new ConvexHitbox(true,[
+            new Vector2(0, 0),
+            new Vector2(0, 15),
+            new Vector2(2, 18),
+            new Vector2(7, 18),
+            new Vector2(9, 15),
+            new Vector2(9, 0),
+        ], this);
+
         // Initialize player HTML Element
+        this.width = 9;
+        this.height = 18;
         const style = this.style;
         style.position = "absolute";
-        style.width = "5vw";
-        style.height = "10vw";
-        style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
-        style.backgroundRepeat = "repeat";
-        style.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        style.backgroundImage = "url('docs/img/Turtle1.png')";
+        style.backgroundRepeat = "no-repeat"
+        style.backgroundSize = "100% 100%";
 
         // Set keys
         this.attackKey = attackKey;
@@ -69,30 +89,37 @@ class Player extends HTMLElement {
     }
 
 
-    // Returns the real x value
-    get x() : number {
-        return this.realX;
+    get height() : number {
+        return vwToNum(this.style.height);
     }
 
-    // Sets both the real and the visible x values
-    set x (x) {
-        this.realX = x;
-        // Put x in the grid
-        x = toGrid(x);
-        this.style.left = x.toString() + "vw";
+    set height(height : number) {
+        this.style.height = height.toString() + "vw";
     }
 
-    // Returns the real y value
-    get y() : number {
-        return this.realY;
+    get width() : number {
+        return vwToNum(this.style.width);
     }
 
-    // Sets both the real and the visible y values
-    set y(y) {
-        this.realY = y;
-        // Put y in the grid
-        y = toGrid(y);
-        this.style.bottom = y.toString() + "vw";
+    set width(width : number) {
+        this.style.width = width.toString() + "vw";
+    }
+
+
+    // Renders position to grid
+    public render() {
+        this.style.left = this.position.x.toString() + "vw";
+
+        this.style.bottom = this.position.y.toString() + "vw";
+
+        if (this.facingRight) {
+            this.style.transform = "scaleX(1)";
+        } else {
+            this.style.transform = "scaleX(-1)";
+        }
+
+        this.hitbox.display();
+
     }
 
 
@@ -163,22 +190,28 @@ class Player extends HTMLElement {
     // Calculates velocity
     public calculateVelocity() : void {
         // Horizontal
-        this.horizontalVelocity -= FRICTION * this.horizontalVelocity;
+        this.velocity.x -= FRICTION * this.velocity.x;
         if(this.leftPressed) {
-            this.horizontalVelocity += -this.movementSpeed;
+            this.velocity.x += -this.movementSpeed;
         }
         if(this.rightPressed) {
-            this.horizontalVelocity += this.movementSpeed;
+            this.velocity.x += this.movementSpeed;
         }
-        if ((this.horizontalVelocity < 0.01 && this.horizontalVelocity > 0) || (this.horizontalVelocity > -0.01 && this.horizontalVelocity < 0)) {
-            this.horizontalVelocity = 0;
+        if ((this.velocity.x < 0.01 && this.velocity.x > 0) || (this.velocity.x > -0.01 && this.velocity.x < 0)) {
+            this.velocity.x = 0;
+        }
+
+        if (this.velocity.x > 0) {
+            this.facingRight = true;
+        } else if (this.velocity.x < 0) {
+            this.facingRight = false;
         }
 
         // Vertical
-        this.verticalVelocity -= GRAVITY_PER_FRAME;
+        this.velocity.y -= GRAVITY_PER_FRAME;
         if (this.upPressed && this.isOnGround) {
             this.isOnGround = false;
-            this.verticalVelocity = this.jumpStrength;
+            this.velocity.y = this.jumpStrength;
         }
     }
 
@@ -204,8 +237,7 @@ class Player extends HTMLElement {
     }
 
     public applyVelocity() : void {
-        this.x += this.horizontalVelocity;
-        this.y += this.verticalVelocity;
+        this.position.add(this.velocity);
     }
 
 

@@ -8,7 +8,110 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const PIXEL_WIDTH = 0.5;
+class CollisionDetection {
+    static collide(playerOne, playerTwo, screen) {
+        let currentHitboxOne = playerOne.hitbox.getCurrentHitbox(Vector2.add(playerOne.position, playerOne.velocity));
+        let currentHitboxTwo = playerTwo.hitbox.getCurrentHitbox(Vector2.add(playerTwo.position, playerTwo.velocity));
+        let overlapX = Math.min(currentHitboxOne.maxX, currentHitboxTwo.maxX) - Math.max(currentHitboxOne.minX, currentHitboxTwo.minX);
+        let overlapY = Math.min(currentHitboxOne.maxY, currentHitboxTwo.maxY) - Math.max(currentHitboxOne.minY, currentHitboxTwo.minY);
+        if (overlapX > 0 && overlapY > 0) {
+            let overlap = Math.min(overlapX, overlapY);
+            let normal;
+            if (overlap == overlapX) {
+                normal = new Vector2(1, 0);
+            }
+            else {
+                if (playerOne.newPosition.y < playerTwo.newPosition.y) {
+                    normal = new Vector2(0, 1);
+                }
+                else {
+                    normal = new Vector2(0, -1);
+                }
+            }
+            if (currentHitboxOne instanceof ConvexHitbox || currentHitboxTwo instanceof ConvexHitbox) {
+                const uniqueNormals = [];
+                for (let i = 0; i < 2; i++) {
+                    let currentHitbox;
+                    if (i === 1)
+                        currentHitbox = currentHitboxOne;
+                    else
+                        currentHitbox = currentHitboxTwo;
+                    if (currentHitbox instanceof ConvexHitbox) {
+                        for (let i = 0; currentHitboxOne.vectorAmount > i; i++) {
+                            const currentNormal = currentHitbox.getNormal(i);
+                            if (uniqueNormals.indexOf(currentNormal) === -1 &&
+                                currentNormal !== Infinity && currentNormal !== -Infinity && currentNormal !== 0) {
+                                uniqueNormals.push(currentNormal);
+                            }
+                        }
+                    }
+                }
+                for (let n = 0; n < uniqueNormals.length; n++) {
+                    let minHb1 = Infinity;
+                    let maxHb1 = -Infinity;
+                    for (let v = 0; v < currentHitboxOne.vectorAmount; v++) {
+                        const current = (currentHitboxOne.vectors[v].x + currentHitboxOne.vectors[v].y * uniqueNormals[n]);
+                        minHb1 = Math.min(minHb1, current);
+                        maxHb1 = Math.max(maxHb1, current);
+                    }
+                    let minHb2 = Infinity;
+                    let maxHb2 = -Infinity;
+                    for (let v = 0; v < currentHitboxTwo.vectorAmount; v++) {
+                        const current = (currentHitboxTwo.vectors[v].x + currentHitboxTwo.vectors[v].y * uniqueNormals[n]);
+                        minHb2 = Math.min(minHb2, current);
+                        maxHb2 = Math.max(maxHb2, current);
+                    }
+                    const currentOverlap = Math.min(maxHb1, maxHb2) - Math.max(minHb1, minHb2);
+                    if (currentOverlap <= 0) {
+                        return;
+                    }
+                    if (currentOverlap < overlap) {
+                        overlap = currentOverlap;
+                        normal = new Vector2(1, uniqueNormals[n]);
+                    }
+                }
+            }
+            console.log(normal);
+            if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
+                normal.x *= -1;
+                normal.y *= -1;
+            }
+            const s = Math.sqrt(1 + normal.y * normal.y);
+            const x = (overlap * normal.x / s) / 2;
+            const y = (overlap * normal.y / s) / 2;
+            const addVelocityOne = new Vector2(-x, -y);
+            const addVelocityTwo = new Vector2(x, y);
+            currentHitboxOne = currentHitboxOne.getCurrentHitbox(addVelocityOne);
+            currentHitboxTwo = currentHitboxTwo.getCurrentHitbox(addVelocityTwo);
+            let overBorder = Math.min(currentHitboxOne.minX, currentHitboxTwo.minX);
+            if (overBorder < 0) {
+                addVelocityOne.x -= overBorder;
+                addVelocityTwo.x -= overBorder;
+            }
+            else {
+                overBorder = Math.max(currentHitboxOne.maxX, currentHitboxTwo.maxX) - 100;
+                if (overBorder > 0) {
+                    addVelocityOne.x -= overBorder;
+                    addVelocityTwo.x -= overBorder;
+                }
+            }
+            overBorder = Math.min(currentHitboxOne.minY, currentHitboxTwo.minY) - screen.floorHeight;
+            if (overBorder < 0) {
+                addVelocityOne.y -= overBorder;
+                addVelocityTwo.y -= overBorder;
+            }
+            else {
+                overBorder = Math.max(currentHitboxOne.maxY, currentHitboxTwo.maxY) - gameHeightInVw;
+                if (overBorder > 0) {
+                    addVelocityOne.y -= overBorder;
+                    addVelocityTwo.y -= overBorder;
+                }
+            }
+            playerOne.velocity.add(addVelocityOne);
+            playerTwo.velocity.add(addVelocityTwo);
+        }
+    }
+}
 const GRAVITY_PER_FRAME = 0.1;
 const FRICTION = 0.4;
 let gameHeightInVw;
@@ -18,9 +121,7 @@ class Game {
         const style = this.gameElement.style;
         style.width = "100vw";
         style.height = "50vw";
-        style.backgroundColor = "black";
         style.position = "fixed";
-        style.imageRendering = "pixelated";
         style.margin = "0";
         document.body.appendChild(this.gameElement);
         window.addEventListener("resize", () => this.setWindowHeight());
@@ -44,7 +145,7 @@ class Game {
         this.currentScene = new PlayScreen(this.gameElement);
     }
     setWindowHeight() {
-        gameHeightInVw = Math.ceil(window.innerHeight / (window.innerWidth / 100) / PIXEL_WIDTH) * PIXEL_WIDTH;
+        gameHeightInVw = window.innerHeight / (window.innerWidth / 100);
         this.gameElement.style.height = gameHeightInVw.toString() + "vw";
     }
 }
@@ -52,19 +153,24 @@ window.addEventListener("load", () => new Game());
 class Player extends HTMLElement {
     constructor() {
         super();
+        this.position = new Vector2(0, 0);
         this.isExecutingAction = false;
         this.movementSpeed = 0.3;
-        this.jumpStrength = 1.8;
+        this.jumpStrength = 2.2;
         this.isOnGround = false;
-        this.horizontalVelocity = 0;
-        this.verticalVelocity = 0;
+        this.velocity = new Vector2(0, 0);
         this.attackKeyPressed = 0;
         this.defendKeyPressed = 0;
         this.upPressed = false;
         this.leftPressed = false;
         this.rightPressed = false;
     }
-    init(attackKey, defendKey, upKey, leftKey, rightKey, id, facing, game) {
+    get newPosition() {
+        return Vector2.add(this.position, this.velocity);
+    }
+    init(maxHealth, attackKey, defendKey, upKey, leftKey, rightKey, id, facing, game) {
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
         if (facing === "right") {
             this.facingRight = true;
         }
@@ -75,13 +181,21 @@ class Player extends HTMLElement {
             throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'.";
         }
         this.id = id;
+        this.hitbox = new ConvexHitbox(true, [
+            new Vector2(0, 0),
+            new Vector2(0, 15),
+            new Vector2(2, 18),
+            new Vector2(7, 18),
+            new Vector2(9, 15),
+            new Vector2(9, 0),
+        ], this);
+        this.width = 9;
+        this.height = 18;
         const style = this.style;
         style.position = "absolute";
-        style.width = "5vw";
-        style.height = "10vw";
-        style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
-        style.backgroundRepeat = "repeat";
-        style.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        style.backgroundImage = "url('docs/img/Turtle1.png')";
+        style.backgroundRepeat = "no-repeat";
+        style.backgroundSize = "100% 100%";
         this.attackKey = attackKey;
         this.defendKey = defendKey;
         this.upKey = upKey;
@@ -91,21 +205,28 @@ class Player extends HTMLElement {
         document.addEventListener("keyup", (e) => this.keyUp(e));
         game.appendChild(this);
     }
-    get x() {
-        return this.realX;
+    get height() {
+        return vwToNum(this.style.height);
     }
-    set x(x) {
-        this.realX = x;
-        x = toGrid(x);
-        this.style.left = x.toString() + "vw";
+    set height(height) {
+        this.style.height = height.toString() + "vw";
     }
-    get y() {
-        return this.realY;
+    get width() {
+        return vwToNum(this.style.width);
     }
-    set y(y) {
-        this.realY = y;
-        y = toGrid(y);
-        this.style.bottom = y.toString() + "vw";
+    set width(width) {
+        this.style.width = width.toString() + "vw";
+    }
+    render() {
+        this.style.left = this.position.x.toString() + "vw";
+        this.style.bottom = this.position.y.toString() + "vw";
+        if (this.facingRight) {
+            this.style.transform = "scaleX(1)";
+        }
+        else {
+            this.style.transform = "scaleX(-1)";
+        }
+        this.hitbox.display();
     }
     keyDown(event) {
         switch (event.code) {
@@ -174,20 +295,26 @@ class Player extends HTMLElement {
         });
     }
     calculateVelocity() {
-        this.horizontalVelocity -= FRICTION * this.horizontalVelocity;
+        this.velocity.x -= FRICTION * this.velocity.x;
         if (this.leftPressed) {
-            this.horizontalVelocity += -this.movementSpeed;
+            this.velocity.x += -this.movementSpeed;
         }
         if (this.rightPressed) {
-            this.horizontalVelocity += this.movementSpeed;
+            this.velocity.x += this.movementSpeed;
         }
-        if ((this.horizontalVelocity < 0.01 && this.horizontalVelocity > 0) || (this.horizontalVelocity > -0.01 && this.horizontalVelocity < 0)) {
-            this.horizontalVelocity = 0;
+        if ((this.velocity.x < 0.01 && this.velocity.x > 0) || (this.velocity.x > -0.01 && this.velocity.x < 0)) {
+            this.velocity.x = 0;
         }
-        this.verticalVelocity -= GRAVITY_PER_FRAME;
+        if (this.velocity.x > 0) {
+            this.facingRight = true;
+        }
+        else if (this.velocity.x < 0) {
+            this.facingRight = false;
+        }
+        this.velocity.y -= GRAVITY_PER_FRAME;
         if (this.upPressed && this.isOnGround) {
             this.isOnGround = false;
-            this.verticalVelocity = this.jumpStrength;
+            this.velocity.y = this.jumpStrength;
         }
     }
     executePlayerAction() {
@@ -209,8 +336,7 @@ class Player extends HTMLElement {
         }
     }
     applyVelocity() {
-        this.x += this.horizontalVelocity;
-        this.y += this.verticalVelocity;
+        this.position.add(this.velocity);
     }
 }
 customElements.define('player-element', Player);
@@ -224,17 +350,190 @@ function wait(time) {
 function vwToNum(vw) {
     return parseFloat(vw.slice(0, vw.length - 2));
 }
-function toGrid(num) {
-    return Math.round(num / PIXEL_WIDTH) * PIXEL_WIDTH;
+class Vector2 {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    add(vec2) {
+        this.x += vec2.x;
+        this.y += vec2.y;
+    }
+    static add(first, second) {
+        return new Vector2(first.x + second.x, first.y + second.y);
+    }
+    subtract(vec2) {
+        this.x -= vec2.x;
+        this.y -= vec2.y;
+    }
+    transform(x, y) {
+        this.x += x;
+        this.y += y;
+    }
+    static dotProduct(vector1, vector2) {
+        return vector1.x * vector2.x + vector1.y * vector2.y;
+    }
+}
+class HitboxBase {
+    constructor(displayable, player) {
+        this.player = player;
+        this.displayable = displayable;
+        if (displayable) {
+            this.element = document.createElement("canvas");
+            this.element.style.background = "none";
+            this.element.setAttribute("height", "2000");
+            this.element.setAttribute("width", "2000");
+            player.appendChild(this.element);
+        }
+    }
+    createPolygon() {
+        const ctx = this.element.getContext("2d");
+        const game = document.getElementsByTagName("game")[0];
+        const playerHeight = this.player.clientHeight;
+        if (ctx !== null) {
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#f00';
+            ctx.beginPath();
+            ctx.moveTo(this.vectors[0].x / 100 * game.offsetWidth, -this.vectors[0].y / 100 * game.offsetWidth + playerHeight);
+            for (let i = 1; i < this.vectors.length; i++) {
+                ctx.lineTo(this.vectors[i].x / 100 * game.offsetWidth, -this.vectors[i].y / 100 * game.offsetWidth + playerHeight);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+}
+class AabbHitbox extends HitboxBase {
+    constructor(displayable, relativePosition, opposite, player) {
+        super(displayable, player);
+        this.position = relativePosition;
+        this.opposite = opposite;
+    }
+    display() {
+    }
+    get vectors() {
+        return [
+            this.position,
+            Vector2.add(this.position, new Vector2(this.opposite.x, 0)),
+            this.opposite,
+            Vector2.add(this.position, new Vector2(0, this.opposite.y))
+        ];
+    }
+    get minX() {
+        if (this.position.x < this.opposite.x) {
+            return this.position.x;
+        }
+        else {
+            return this.opposite.x;
+        }
+    }
+    get maxX() {
+        if (this.position.x > this.opposite.x) {
+            return this.position.x;
+        }
+        else {
+            return this.opposite.x;
+        }
+    }
+    get minY() {
+        if (this.position.y < this.opposite.y) {
+            return this.position.y;
+        }
+        else {
+            return this.opposite.y;
+        }
+    }
+    get maxY() {
+        if (this.position.y > this.opposite.y) {
+            return this.position.y;
+        }
+        else {
+            return this.opposite.y;
+        }
+    }
+    get vectorAmount() {
+        return 4;
+    }
+    getCurrentHitbox(currentPosition) {
+        return new AabbHitbox(this.displayable, Vector2.add(currentPosition, this.position), Vector2.add(currentPosition, this.opposite), this.player);
+    }
+    getAllUniqueNormals() {
+        return [Infinity, -Infinity, 0];
+    }
+}
+class ConvexHitbox extends HitboxBase {
+    constructor(displayable, vectors, player) {
+        super(displayable, player);
+        this.vectors = vectors;
+    }
+    display() {
+        if (this.displayable) {
+            this.element = this.createPolygon();
+            this.displayable = false;
+        }
+    }
+    get minX() {
+        let minX = Infinity;
+        for (let i = 0; this.vectors.length > i; i++) {
+            const x = this.vectors[i].x;
+            minX = Math.min(minX, x);
+        }
+        return minX;
+    }
+    get maxX() {
+        let maxX = -Infinity;
+        for (let i = 0; this.vectors.length > i; i++) {
+            const x = this.vectors[i].x;
+            if (x > maxX) {
+                maxX = x;
+            }
+        }
+        return maxX;
+    }
+    get minY() {
+        let minY = Infinity;
+        for (let i = 0; this.vectors.length > i; i++) {
+            const y = this.vectors[i].y;
+            if (y < minY) {
+                minY = y;
+            }
+        }
+        return minY;
+    }
+    get maxY() {
+        let maxY = -Infinity;
+        for (let i = 0; this.vectors.length > i; i++) {
+            const y = this.vectors[i].y;
+            if (y > maxY) {
+                maxY = y;
+            }
+        }
+        return maxY;
+    }
+    get vectorAmount() {
+        return this.vectors.length;
+    }
+    getCurrentHitbox(currentPosition) {
+        const vectors = [];
+        for (let i = 0; this.vectors.length > i; i++) {
+            vectors.push(Vector2.add(this.vectors[i], currentPosition));
+        }
+        return new ConvexHitbox(false, vectors, this.player);
+    }
+    getNormal(number) {
+        let vector1;
+        let vector2;
+        vector1 = this.vectors[number];
+        vector2 = this.vectors[(number + 1) % this.vectorAmount];
+        return 1 / -((vector1.y - vector2.y) / (vector1.x - vector2.x));
+    }
 }
 class PlayScreen {
     constructor(game) {
-        this.floorHeight = toGrid(6);
+        this.floorHeight = 6;
         const background = document.createElement("background");
         const backgroundStyle = background.style;
-        backgroundStyle.backgroundImage = "url('docs/img/Blue-dummy-texture.png')";
-        backgroundStyle.backgroundRepeat = "repeat";
-        backgroundStyle.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        backgroundStyle.backgroundColor = "blue";
         backgroundStyle.width = "100%";
         backgroundStyle.height = "100%";
         backgroundStyle.position = "absolute";
@@ -242,9 +541,7 @@ class PlayScreen {
         const floorHeight = this.floorHeight;
         const floor = document.createElement("floor");
         const floorStyle = floor.style;
-        floorStyle.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-        floorStyle.backgroundRepeat = "repeat";
-        floorStyle.backgroundSize = (PIXEL_WIDTH * 2).toString() + "vw";
+        floorStyle.backgroundColor = "green";
         floorStyle.position = "absolute";
         floorStyle.width = "100vw";
         floorStyle.height = floorHeight.toString() + "vw";
@@ -252,12 +549,12 @@ class PlayScreen {
         game.appendChild(floor);
         const playerOne = document.createElement("player-element", { is: "player-element" });
         const playerTwo = document.createElement("player-element", { is: "player-element" });
-        playerOne.init("KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", game);
-        playerTwo.init("Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", game);
-        playerOne.y = floorHeight;
-        playerTwo.y = floorHeight;
-        playerOne.x = 10;
-        playerTwo.x = 85;
+        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", game);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", game);
+        playerOne.position.y = floorHeight;
+        playerTwo.position.y = floorHeight;
+        playerOne.position.x = 10;
+        playerTwo.position.x = 85;
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
     }
@@ -266,94 +563,27 @@ class PlayScreen {
         const playerTwo = this.playerTwo;
         playerOne.calculateVelocity();
         playerTwo.calculateVelocity();
-        const horizontalVelocity1 = this.formatHorizontalVelocity(playerOne, playerTwo);
-        const horizontalVelocity2 = this.formatHorizontalVelocity(playerTwo, playerOne);
-        const verticalVelocity1 = this.formatVerticalVelocity(playerOne, playerTwo);
-        const verticalVelocity2 = this.formatVerticalVelocity(playerTwo, playerOne);
-        playerOne.horizontalVelocity = horizontalVelocity1;
-        playerTwo.horizontalVelocity = horizontalVelocity2;
-        playerOne.verticalVelocity = verticalVelocity1;
-        playerTwo.verticalVelocity = verticalVelocity2;
+        this.keepPlayerInBounds(playerOne);
+        this.keepPlayerInBounds(playerTwo);
+        CollisionDetection.collide(playerOne, playerTwo, this);
         playerOne.applyVelocity();
         playerTwo.applyVelocity();
+        playerOne.render();
+        playerTwo.render();
     }
-    formatHorizontalVelocity(thisPlayer, opponent) {
-        let thisPlayerVelocity = thisPlayer.horizontalVelocity;
-        let opponentVelocity = opponent.horizontalVelocity;
-        let isLeftPlayer;
-        if (thisPlayer.id == 'player-one') {
-            isLeftPlayer = (thisPlayer.x <= opponent.x);
+    keepPlayerInBounds(player) {
+        const position = player.position;
+        const velocity = player.velocity;
+        if (position.y + velocity.y < this.floorHeight) {
+            velocity.y = this.floorHeight - position.y;
+            player.isOnGround = true;
         }
-        else {
-            isLeftPlayer = (thisPlayer.x < opponent.x);
+        if (position.x + velocity.x < 0) {
+            velocity.x = -position.x;
         }
-        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
-        const opponentHeight = vwToNum(opponent.style.height);
-        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
-        const opponentWidth = vwToNum(opponent.style.width);
-        if (thisPlayer.x + thisPlayerVelocity < 0) {
-            thisPlayerVelocity = 0 - thisPlayer.x;
+        else if (position.x + player.width + velocity.x > 100) {
+            velocity.x = 100 - player.width - position.x;
         }
-        else if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > 100) {
-            thisPlayerVelocity = 100 - thisPlayer.x - thisPlayerWidth;
-        }
-        if (opponent.x + opponentVelocity < 0) {
-            opponentVelocity = 0 - opponent.x;
-        }
-        else if (opponent.x + opponentWidth + opponentVelocity > 100) {
-            opponentVelocity = 100 - opponent.x - opponentWidth;
-        }
-        if (thisPlayer.y + thisPlayerHeight > opponent.y && opponent.y + opponentHeight > thisPlayer.y) {
-            if (thisPlayer.x + thisPlayerWidth + thisPlayerVelocity > opponent.x + opponentVelocity &&
-                opponent.x + opponentWidth + opponentVelocity > thisPlayer.x + thisPlayerVelocity) {
-                let distance;
-                if (isLeftPlayer) {
-                    distance = opponent.x - (thisPlayer.x + thisPlayerWidth);
-                }
-                else {
-                    distance = (opponent.x + opponentWidth) - thisPlayer.x;
-                }
-                if (thisPlayerVelocity == opponentVelocity) {
-                    if (isLeftPlayer) {
-                        thisPlayerVelocity += distance / 2;
-                        opponentVelocity += distance / 2;
-                    }
-                    else {
-                        thisPlayerVelocity += distance / 2;
-                        opponentVelocity += distance / 2;
-                    }
-                }
-                else {
-                    thisPlayerVelocity = thisPlayerVelocity / (thisPlayerVelocity - opponentVelocity) * distance;
-                }
-            }
-        }
-        return thisPlayerVelocity;
-    }
-    formatVerticalVelocity(thisPlayer, opponent) {
-        let thisPlayerVelocity = thisPlayer.verticalVelocity;
-        let opponentVelocity = opponent.verticalVelocity;
-        const thisPlayerHeight = vwToNum(thisPlayer.style.height);
-        const opponentHeight = vwToNum(opponent.style.height);
-        const thisPlayerWidth = vwToNum(thisPlayer.style.width);
-        const opponentWidth = vwToNum(opponent.style.width);
-        thisPlayer.isOnGround = false;
-        if (thisPlayer.y + thisPlayerVelocity < this.floorHeight) {
-            thisPlayer.isOnGround = true;
-            thisPlayerVelocity = this.floorHeight - thisPlayer.y;
-        }
-        if (opponent.y + opponentVelocity < this.floorHeight) {
-            opponentVelocity = this.floorHeight - opponent.y;
-        }
-        if (thisPlayer.x + thisPlayerWidth > opponent.x && opponent.x + opponentWidth > thisPlayer.x) {
-            if (thisPlayer.y + thisPlayerVelocity < opponent.y + opponentHeight + opponentVelocity && thisPlayer.y > opponent.y) {
-                if (opponent.isOnGround) {
-                    thisPlayer.isOnGround = true;
-                }
-                thisPlayerVelocity = opponent.y + opponentHeight + (opponentVelocity * 1.01) - thisPlayer.y;
-            }
-        }
-        return thisPlayerVelocity;
     }
     update() {
         this.playerOne.executePlayerAction();

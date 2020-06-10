@@ -11,7 +11,3 @@ function wait(time : number) {
 function vwToNum(vw : string) : number {
     return parseFloat(vw.slice(0, vw.length - 2))
 }
-
-function toGrid(num : number) {
-    return Math.round(num / PIXEL_WIDTH) * PIXEL_WIDTH;
-}
