@@ -69,14 +69,16 @@ class PlayScreen implements ScreenBase {
         const position = player.position;
         const velocity = player.velocity;
         // Keep player above the ground
-        if (position.y + velocity.y < this.floorHeight) {
+        if (player.newPosition.y < this.floorHeight) {
              velocity.y = this.floorHeight - position.y
             player.isOnGround = true;
+        } else if (player.newPosition.y + player.hitbox.maxY > gameHeightInVw) {
+            velocity.y = gameHeightInVw - player.hitbox.maxY - position.y;
         }
-        if (position.x + velocity.x < 0) {
+        if (player.newPosition.x < 0) {
             velocity.x = -position.x;
-        } else if(position.x + player.width + velocity.x > 100) {
-            velocity.x = 100 - player.width - position.x;
+        } else if(player.newPosition.x + player.hitbox.maxX > 100) {
+            velocity.x = 100 - player.hitbox.maxX - position.x;
         }
     }
 

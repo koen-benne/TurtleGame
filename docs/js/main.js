@@ -74,6 +74,7 @@ class CollisionDetection {
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
+                console.log("test");
             }
             else if (normal.y == 1) {
                 playerTwo.isOnGround = true;
@@ -191,16 +192,18 @@ class Player extends HTMLElement {
             this.facingRight = false;
         }
         else {
-            throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'.";
+            throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'.";
         }
         this.id = id;
         this.hitbox = new ConvexHitbox(false, [
-            new Vector2(0, 0),
+            new Vector2(2, 0),
+            new Vector2(0, 4),
             new Vector2(0, 13),
             new Vector2(2, 17.5),
             new Vector2(6.5, 17.5),
             new Vector2(8.5, 13),
-            new Vector2(8.5, 0),
+            new Vector2(8.5, 4),
+            new Vector2(6.5, 0),
         ], this);
         this.width = 9;
         this.height = 18;
@@ -601,15 +604,18 @@ class PlayScreen {
     keepPlayerInBounds(player) {
         const position = player.position;
         const velocity = player.velocity;
-        if (position.y + velocity.y < this.floorHeight) {
+        if (player.newPosition.y < this.floorHeight) {
             velocity.y = this.floorHeight - position.y;
             player.isOnGround = true;
         }
-        if (position.x + velocity.x < 0) {
+        else if (player.newPosition.y + player.hitbox.maxY > gameHeightInVw) {
+            velocity.y = gameHeightInVw - player.hitbox.maxY - position.y;
+        }
+        if (player.newPosition.x < 0) {
             velocity.x = -position.x;
         }
-        else if (position.x + player.width + velocity.x > 100) {
-            velocity.x = 100 - player.width - position.x;
+        else if (player.newPosition.x + player.hitbox.maxX > 100) {
+            velocity.x = 100 - player.hitbox.maxX - position.x;
         }
     }
     update() {

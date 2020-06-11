@@ -34,10 +34,12 @@ class Player extends HTMLElement {
         super();
     }
 
+    // Get the position of the next frame according to the current velocity
     public get newPosition() : Vector2 {
         return Vector2.add(this.position, this.velocity)
     }
 
+    // Initialise the player, unfortunately this can't be done inside the constructor as player is an instance of HTMLElement
     public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, game : HTMLElement) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
@@ -49,19 +51,21 @@ class Player extends HTMLElement {
             this.facingRight = false;
         } else {
             // Throw custom error if facing is incorrect
-            throw "exeption: the parameter 'facing' in Player.init sould be either 'right' or 'left'."
+            throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'."
         }
 
         // Set id
         this.id = id;
 
         this.hitbox = new ConvexHitbox(false,[
-            new Vector2(0, 0),
+            new Vector2(2, 0),
+            new Vector2(0, 4),
             new Vector2(0, 13),
             new Vector2(2, 17.5),
             new Vector2(6.5, 17.5),
             new Vector2(8.5, 13),
-            new Vector2(8.5, 0),
+            new Vector2(8.5, 4),
+            new Vector2(6.5, 0),
         ], this);
 
         // Initialize player HTML Element

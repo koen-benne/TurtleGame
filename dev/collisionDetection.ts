@@ -93,6 +93,7 @@ abstract class CollisionDetection {
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
+                console.log("test")
             } else if (normal.y == 1) { // Give players ability to jump off of one another
                 playerTwo.isOnGround = true;
             } else if (normal.y == -1) {
