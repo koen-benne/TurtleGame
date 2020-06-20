@@ -33,6 +33,11 @@ class Game {
         this.gameLoop();
     }
 
+    public setShieldScreen(){
+        this.gameElement.innerHTML = "";
+        this.currentScene = new ShieldScreen(this);
+    }
+
     public setStartScreen() {
         this.gameElement.innerHTML = "";
         this.currentScene = new StartScreen(this);
