@@ -285,7 +285,6 @@ class Player extends HTMLElement {
                 }
 
                 await wait(40);
-                console.log(frame)
                 this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Walking" + frame.toString() + ".png')";
 
                 if (i >= frames * 2 - 1) i = 1;
@@ -305,6 +304,7 @@ class Player extends HTMLElement {
             this.velocity.x += this.movementSpeed;
         }
 
+        // For walking animation
         if ((this.leftPressed || this.rightPressed) && this.isOnGround) {
             if (!this.isWalking) {
                 this.isWalking = true;
@@ -318,6 +318,7 @@ class Player extends HTMLElement {
             this.isWalking = false;
         }
 
+        // Set velocity to 0 when it is very small
         if ((this.velocity.x < 0.01 && this.velocity.x > 0) || (this.velocity.x > -0.01 && this.velocity.x < 0)) {
             this.velocity.x = 0;
         }

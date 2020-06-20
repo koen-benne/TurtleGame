@@ -42,9 +42,9 @@ class HealthBar {
         containerStyle.top = "2vw"
 
         if(side === "right") {
-            containerStyle.right = "5vw"
+            containerStyle.right = "6.5vw"
         } else if(side === "left") {
-            containerStyle.left = "5vw"
+            containerStyle.left = "6.5vw"
         } else {
             // Throw custom error if facing is incorrect
             throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'."

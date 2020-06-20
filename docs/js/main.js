@@ -399,7 +399,6 @@ class Player extends HTMLElement {
                     frame = i;
                 }
                 yield wait(40);
-                console.log(frame);
                 this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Walking" + frame.toString() + ".png')";
                 if (i >= frames * 2 - 1)
                     i = 1;
@@ -773,10 +772,10 @@ class HealthBar {
         containerStyle.backgroundColor = "lightgrey";
         containerStyle.top = "2vw";
         if (side === "right") {
-            containerStyle.right = "5vw";
+            containerStyle.right = "6.5vw";
         }
         else if (side === "left") {
-            containerStyle.left = "5vw";
+            containerStyle.left = "6.5vw";
         }
         else {
             throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'.";
