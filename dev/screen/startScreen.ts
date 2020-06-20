@@ -25,7 +25,7 @@ class StartScreen implements ScreenBase {
         shieldButton.style.top = "40vh";
         shieldButton.style.right = "10vw";
         shieldButton.innerText = "Shield";
-        shieldButton.addEventListener("click", () => game.start());
+        shieldButton.addEventListener("click", () => game.setShieldScreen());
         game.gameElement.appendChild(shieldButton);
 
     }
