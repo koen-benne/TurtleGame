@@ -34,6 +34,7 @@ class HealthBar {
         // Set health bar
         this.div = document.createElement("health-bar-container");
         const containerStyle = this.div.style;
+        containerStyle.zIndex = "10";
         containerStyle.width = width.toString() + "vw";
         containerStyle.height = height.toString() + "vw";
         containerStyle.position = "absolute";
@@ -51,7 +52,7 @@ class HealthBar {
 
         this.bar = document.createElement("health-bar");
         const style = this.bar.style;
-        style.zIndex = "10";
+        style.zIndex = "11";
         style.width = this.maxBarWidth.toString() + "vw";
         style.height = (height - offset * 2).toString() + "vw";
         style.left = offset.toString() + "vw";
