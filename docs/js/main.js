@@ -378,6 +378,28 @@ class Player extends HTMLElement {
             }
         });
     }
+    walkingAnimation() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const frames = 6;
+            for (let i = 1; i < frames * 2; i++) {
+                if (!this.isWalking) {
+                    return;
+                }
+                let frame;
+                if (i > frames) {
+                    frame = i * -1 + frames * 2;
+                }
+                else {
+                    frame = i;
+                }
+                yield wait(40);
+                console.log(frame);
+                this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Walking" + frame.toString() + ".png')";
+                if (i >= frames * 2 - 1)
+                    i = 1;
+            }
+        });
+    }
     calculateVelocity() {
         this.velocity.x -= FRICTION * this.velocity.x;
         if (this.leftPressed) {
@@ -389,7 +411,15 @@ class Player extends HTMLElement {
             this.velocity.x += this.movementSpeed;
         }
         if (this.leftPressed || this.rightPressed) {
-            this.isWalking = true;
+            if (!this.isWalking) {
+                this.isWalking = true;
+                this.walkingAnimation().then(() => {
+                    this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
+                });
+            }
+            else {
+                this.isWalking = true;
+            }
         }
         else {
             this.isWalking = false;

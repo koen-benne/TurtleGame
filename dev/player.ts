@@ -262,7 +262,29 @@ class Player extends HTMLElement {
         while(!this.isOnGround) {
             await wait(60) // Wait and recheck
         }
+    }
 
+    // Execute walking animation
+    private async walkingAnimation() {
+        const frames = 6;
+            for (let i = 1; i < frames * 2; i++) {
+                if (!this.isWalking) {
+
+                    return;
+                }
+                let frame : number;
+                if (i > frames) {
+                    frame = i * -1 + frames * 2;
+                } else {
+                    frame = i;
+                }
+
+                await wait(40);
+                console.log(frame)
+                this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Walking" + frame.toString() + ".png')";
+
+                if (i >= frames * 2 - 1) i = 1;
+        }
     }
 
     // Calculates velocity
@@ -279,7 +301,14 @@ class Player extends HTMLElement {
         }
 
         if (this.leftPressed || this.rightPressed) {
-            this.isWalking = true;
+            if (!this.isWalking) {
+                this.isWalking = true;
+                this.walkingAnimation().then(() => {
+                    this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
+                });
+            } else {
+                this.isWalking = true;
+            }
         } else {
             this.isWalking = false;
         }
