@@ -13,7 +13,6 @@ class Game {
         const style = this.gameElement.style;
         style.width = "100vw";
         style.height = "50vw";
-        style.position = "fixed";
         style.margin = "0";
         document.body.appendChild(this.gameElement);
 
@@ -32,6 +31,11 @@ class Game {
     public start() {
         this.setPlayScreen();
         this.gameLoop();
+    }
+
+    public setShieldScreen(){
+        this.gameElement.innerHTML = "";
+        this.currentScene = new ShieldScreen(this);
     }
 
     public setStartScreen() {
