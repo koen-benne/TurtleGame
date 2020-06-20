@@ -92,7 +92,13 @@ class Player extends HTMLElement {
             "docs/img/turtle/" + this.body + "/Jumping1.png",
             "docs/img/turtle/" + this.body + "/Jumping2.png",
             "docs/img/turtle/" + this.body + "/Jumping3.png",
-            "docs/img/turtle/" + this.body + "/Jumping4.png"
+            "docs/img/turtle/" + this.body + "/Jumping4.png",
+            "docs/img/turtle/" + this.body + "/Walking1.png",
+            "docs/img/turtle/" + this.body + "/Walking2.png",
+            "docs/img/turtle/" + this.body + "/Walking3.png",
+            "docs/img/turtle/" + this.body + "/Walking4.png",
+            "docs/img/turtle/" + this.body + "/Walking5.png",
+            "docs/img/turtle/" + this.body + "/Walking6.png",
         ]);
 
 
