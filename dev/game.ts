@@ -1,4 +1,3 @@
-const PIXEL_WIDTH = 0.5;
 const GRAVITY_PER_FRAME = 0.1;
 const FRICTION = 0.4;
 let gameHeightInVw : number;
@@ -14,26 +13,24 @@ class Game {
         const style = this.gameElement.style;
         style.width = "100vw";
         style.height = "50vw";
-        
-        // style.position = "fixed";
-       
         style.margin = "0";
         document.body.appendChild(this.gameElement);
 
         window.addEventListener("resize", () => this.setWindowHeight());
         this.setWindowHeight();
 
-        this.onStart();
-        this.gameLoop();
+        this.setStartScreen();
     }
 
-    private gameLoop() {
+    public gameLoop() {
         this.currentScene.update();
+
         requestAnimationFrame(() => this.gameLoop());
     }
 
-    private onStart() {
-        this.setShieldScreen();
+    public start() {
+        this.setPlayScreen();
+        this.gameLoop();
     }
 
     public setShieldScreen(){
@@ -43,7 +40,7 @@ class Game {
 
     public setStartScreen() {
         this.gameElement.innerHTML = "";
-        this.currentScene = new StartScreen();
+        this.currentScene = new StartScreen(this);
     }
 
     public setPlayScreen() {
@@ -52,7 +49,7 @@ class Game {
     }
 
     public setWindowHeight() {
-        gameHeightInVw = Math.ceil(window.innerHeight / (window.innerWidth / 100) / PIXEL_WIDTH) * PIXEL_WIDTH;
+        gameHeightInVw = window.innerHeight / (window.innerWidth / 100);
         this.gameElement.style.height = gameHeightInVw.toString() + "vw"
     }
 

@@ -12,6 +12,10 @@ function vwToNum(vw : string) : number {
     return parseFloat(vw.slice(0, vw.length - 2))
 }
 
-function toGrid(num : number) {
-    return Math.round(num / PIXEL_WIDTH) * PIXEL_WIDTH;
+function preloadImages(list : string[]) {
+    const imageList = [];
+    for (let i = 0; i < list.length; i++) {
+        const img = new Image();
+        img.src = list[i];
+    }
 }
