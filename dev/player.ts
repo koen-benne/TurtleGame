@@ -1,5 +1,9 @@
 class Player extends HTMLElement {
     public hitbox : HitboxBase;
+    public healthBar : HealthBar;
+
+    public body : string;
+    public image: HTMLElement;
 
     public position : Vector2 = new Vector2(0, 0);
 
@@ -14,6 +18,7 @@ class Player extends HTMLElement {
     private jumpStrength : number = 2.2;
 
     public isOnGround : boolean = false;
+    public isWalking : boolean = false;
 
     public velocity : Vector2 = new Vector2(0, 0);
 
@@ -36,11 +41,11 @@ class Player extends HTMLElement {
 
     // Get the position of the next frame according to the current velocity
     public get newPosition() : Vector2 {
-        return Vector2.add(this.position, this.velocity)
+        return Vector2.add(this.position, this.velocity);
     }
 
     // Initialise the player, unfortunately this can't be done inside the constructor as player is an instance of HTMLElement
-    public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, game : HTMLElement) {
+    public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, healthBarSide : string, game : HTMLElement) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
 
@@ -54,28 +59,53 @@ class Player extends HTMLElement {
             throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'."
         }
 
+        // Create health bar
+        this.healthBar = new HealthBar(healthBarSide, game);
+
         // Set id
         this.id = id;
 
         this.hitbox = new ConvexHitbox(false,[
             new Vector2(2, 0),
             new Vector2(0, 4),
-            new Vector2(0, 13),
-            new Vector2(2, 17.5),
-            new Vector2(6.5, 17.5),
-            new Vector2(8.5, 13),
+            new Vector2(0, 10.4),
+            new Vector2(2, 14.9),
+            new Vector2(6.5, 14.9),
+            new Vector2(8.5, 10.4),
             new Vector2(8.5, 4),
             new Vector2(6.5, 0),
         ], this);
 
         // Initialize player HTML Element
-        this.width = 9;
-        this.height = 18;
+        this.width = this.hitbox.maxX + this.hitbox.minX;
+        this.height = this.hitbox.maxY + this.hitbox.minY;
         const style = this.style;
         style.position = "absolute";
-        style.backgroundImage = "url('docs/img/Turtle1.png')";
-        style.backgroundRepeat = "no-repeat"
-        style.backgroundSize = "100% 101%";
+        this.image = document.createElement("div");
+        this.appendChild(this.image);
+        const imageStyle = this.image.style;
+        this.body = "1";
+
+        // Preload images
+        preloadImages([
+            "docs/img/turtle/"+ this.body +"/Default.png",
+            "docs/img/turtle/" + this.body + "/Jumping1.png",
+            "docs/img/turtle/" + this.body + "/Jumping2.png",
+            "docs/img/turtle/" + this.body + "/Jumping3.png",
+            "docs/img/turtle/" + this.body + "/Jumping4.png"
+        ]);
+
+
+        // Initialize image element
+        imageStyle.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
+        imageStyle.backgroundRepeat = "no-repeat"
+        const playerHeight : number = 19.5;
+        imageStyle.width = (playerHeight * 1.14).toString() + "vw ";
+        imageStyle.height = playerHeight.toString() + "vw";
+        imageStyle.backgroundSize ="100% 100%";
+        imageStyle.position = "absolute"
+        imageStyle.left = "-7.27vw";
+        imageStyle.top = "-2.87vw";
 
         // Set keys
         this.attackKey = attackKey;
@@ -172,57 +202,107 @@ class Player extends HTMLElement {
         }
     }
 
+    // Damages this player
+    public async damage(amount: number, knockBack : number, opponent : Player) {
+        this.isExecutingAction = true;
+        this.health -= amount;
+        if (opponent.position.x <= this.position.x) {
+            this.velocity.x += knockBack;
+        } else {
+            this.velocity.x -= knockBack;
+        }
+        await wait(130); // Cooldown for being damaged
+        this.isExecutingAction = false;
+
+        this.healthBar.health = this.health;
+    }
+
 
     // Attack action
-    private async attack() {
-        this.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+    private async attack(opponent : Player) {
+        this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+        let attackHitbox : AabbHitbox;
+        const reach = 5;
+        const hitbox = this.hitbox;
+        if (this.facingRight) {
+            attackHitbox = new AabbHitbox(false, new Vector2(hitbox.maxX, hitbox.minY), new Vector2(hitbox.maxX + reach, hitbox.maxY), this);
+        } else {
+            attackHitbox = new AabbHitbox(false, new Vector2(-reach, hitbox.minY), new Vector2(0, hitbox.maxY), this);
+        }
+        if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position),
+            attackHitbox.getCurrentHitbox(this.position))) {
+            opponent.damage(5,3, this);
+        }
         await wait(100);
-        this.style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
+        this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
+
         await wait(50);
         this.isExecutingAction = false;
     }
 
     // Defend action
     private async defend() {
-        this.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+        this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
         await wait(100);
-        this.style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
+        this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
         await wait(50);
         this.isExecutingAction = false;
     }
 
+
+    // Execute jump animation
+    private async jumpAnimation() {
+        for(let i = 1; i <= 4; i++) {
+            if (this.isOnGround) {
+                return;
+            }
+            await wait(30);
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Jumping" + i.toString() + ".png')";
+        }
+        while(!this.isOnGround) {
+            await wait(60) // Wait and recheck
+        }
+
+    }
 
     // Calculates velocity
     public calculateVelocity() : void {
         // Horizontal
         this.velocity.x -= FRICTION * this.velocity.x;
         if(this.leftPressed) {
+            this.facingRight = false;
             this.velocity.x += -this.movementSpeed;
         }
         if(this.rightPressed) {
+            this.facingRight = true;
             this.velocity.x += this.movementSpeed;
         }
+
+        if (this.leftPressed || this.rightPressed) {
+            this.isWalking = true;
+        } else {
+            this.isWalking = false;
+        }
+
         if ((this.velocity.x < 0.01 && this.velocity.x > 0) || (this.velocity.x > -0.01 && this.velocity.x < 0)) {
             this.velocity.x = 0;
         }
 
-        if (this.velocity.x > 0) {
-            this.facingRight = true;
-        } else if (this.velocity.x < 0) {
-            this.facingRight = false;
-        }
 
         // Vertical
         this.velocity.y -= GRAVITY_PER_FRAME;
         if (this.upPressed && this.isOnGround) {
             this.isOnGround = false;
+            this.jumpAnimation().then(() => {
+                this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
+            })
             this.velocity.y = this.jumpStrength;
         }
     }
 
 
     // Executes the player actions
-    public executePlayerAction() : void {
+    public executePlayerAction(opponent : Player) : void {
         // Make sure that player can not execute action if action is already being executed
         if (!this.isExecutingAction) {
 
@@ -230,7 +310,7 @@ class Player extends HTMLElement {
             if (this.attackKeyPressed < maxKeypressTime && this.attackKeyPressed > 0) {
                 this.attackKeyPressed = maxKeypressTime;
                 this.isExecutingAction = true;
-                this.attack();
+                this.attack(opponent);
             } else if (this.defendKeyPressed < maxKeypressTime && this.defendKeyPressed > 0) {
                 this.defendKeyPressed = maxKeypressTime;
                 this.isExecutingAction = true;

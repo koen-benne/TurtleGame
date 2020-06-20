@@ -46,8 +46,13 @@ abstract class HitboxBase {
         }
     }
 
+    public removeElement() : void {
+        // @ts-ignore
+        this.element.parentNode.removeChild(this.element);
+    }
 
     abstract display() : void;
+
 
 
     abstract get minX() : number;

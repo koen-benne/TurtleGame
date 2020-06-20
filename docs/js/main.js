@@ -74,7 +74,6 @@ class CollisionDetection {
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
-                console.log("test");
             }
             else if (normal.y == 1) {
                 playerTwo.isOnGround = true;
@@ -125,6 +124,14 @@ class CollisionDetection {
             }
         }
     }
+    static isCollidingAABB(hitbox1, hitbox2) {
+        if (hitbox1.maxX > hitbox2.minX && hitbox2.maxX > hitbox1.minX && hitbox1.maxY > hitbox2.minY && hitbox2.maxY > hitbox1.minY) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 }
 const GRAVITY_PER_FRAME = 0.1;
 const FRICTION = 0.4;
@@ -172,6 +179,7 @@ class Player extends HTMLElement {
         this.movementSpeed = 0.3;
         this.jumpStrength = 2.2;
         this.isOnGround = false;
+        this.isWalking = false;
         this.velocity = new Vector2(0, 0);
         this.attackKeyPressed = 0;
         this.defendKeyPressed = 0;
@@ -182,7 +190,7 @@ class Player extends HTMLElement {
     get newPosition() {
         return Vector2.add(this.position, this.velocity);
     }
-    init(maxHealth, attackKey, defendKey, upKey, leftKey, rightKey, id, facing, game) {
+    init(maxHealth, attackKey, defendKey, upKey, leftKey, rightKey, id, facing, healthBarSide, game) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         if (facing === "right") {
@@ -194,24 +202,42 @@ class Player extends HTMLElement {
         else {
             throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'.";
         }
+        this.healthBar = new HealthBar(healthBarSide, game);
         this.id = id;
         this.hitbox = new ConvexHitbox(false, [
             new Vector2(2, 0),
             new Vector2(0, 4),
-            new Vector2(0, 13),
-            new Vector2(2, 17.5),
-            new Vector2(6.5, 17.5),
-            new Vector2(8.5, 13),
+            new Vector2(0, 10.4),
+            new Vector2(2, 14.9),
+            new Vector2(6.5, 14.9),
+            new Vector2(8.5, 10.4),
             new Vector2(8.5, 4),
             new Vector2(6.5, 0),
         ], this);
-        this.width = 9;
-        this.height = 18;
+        this.width = this.hitbox.maxX + this.hitbox.minX;
+        this.height = this.hitbox.maxY + this.hitbox.minY;
         const style = this.style;
         style.position = "absolute";
-        style.backgroundImage = "url('docs/img/Turtle1.png')";
-        style.backgroundRepeat = "no-repeat";
-        style.backgroundSize = "100% 101%";
+        this.image = document.createElement("div");
+        this.appendChild(this.image);
+        const imageStyle = this.image.style;
+        this.body = "1";
+        preloadImages([
+            "docs/img/turtle/" + this.body + "/Default.png",
+            "docs/img/turtle/" + this.body + "/Jumping1.png",
+            "docs/img/turtle/" + this.body + "/Jumping2.png",
+            "docs/img/turtle/" + this.body + "/Jumping3.png",
+            "docs/img/turtle/" + this.body + "/Jumping4.png"
+        ]);
+        imageStyle.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
+        imageStyle.backgroundRepeat = "no-repeat";
+        const playerHeight = 19.5;
+        imageStyle.width = (playerHeight * 1.14).toString() + "vw ";
+        imageStyle.height = playerHeight.toString() + "vw";
+        imageStyle.backgroundSize = "100% 100%";
+        imageStyle.position = "absolute";
+        imageStyle.left = "-7.27vw";
+        imageStyle.top = "-2.87vw";
         this.attackKey = attackKey;
         this.defendKey = defendKey;
         this.upKey = upKey;
@@ -293,54 +319,100 @@ class Player extends HTMLElement {
             }
         }
     }
-    attack() {
+    damage(amount, knockBack, opponent) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+            this.isExecutingAction = true;
+            this.health -= amount;
+            if (opponent.position.x <= this.position.x) {
+                this.velocity.x += knockBack;
+            }
+            else {
+                this.velocity.x -= knockBack;
+            }
+            yield wait(130);
+            this.isExecutingAction = false;
+            this.healthBar.health = this.health;
+        });
+    }
+    attack(opponent) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+            let attackHitbox;
+            const reach = 5;
+            const hitbox = this.hitbox;
+            if (this.facingRight) {
+                attackHitbox = new AabbHitbox(false, new Vector2(hitbox.maxX, hitbox.minY), new Vector2(hitbox.maxX + reach, hitbox.maxY), this);
+            }
+            else {
+                attackHitbox = new AabbHitbox(false, new Vector2(-reach, hitbox.minY), new Vector2(0, hitbox.maxY), this);
+            }
+            if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position), attackHitbox.getCurrentHitbox(this.position))) {
+                opponent.damage(5, 3, this);
+            }
             yield wait(100);
-            this.style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
             yield wait(50);
             this.isExecutingAction = false;
         });
     }
     defend() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+            this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
             yield wait(100);
-            this.style.backgroundImage = "url('docs/img/Red-dummy-texture.png')";
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
             yield wait(50);
             this.isExecutingAction = false;
+        });
+    }
+    jumpAnimation() {
+        return __awaiter(this, void 0, void 0, function* () {
+            for (let i = 1; i <= 4; i++) {
+                if (this.isOnGround) {
+                    return;
+                }
+                yield wait(30);
+                this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Jumping" + i.toString() + ".png')";
+            }
+            while (!this.isOnGround) {
+                yield wait(60);
+            }
         });
     }
     calculateVelocity() {
         this.velocity.x -= FRICTION * this.velocity.x;
         if (this.leftPressed) {
+            this.facingRight = false;
             this.velocity.x += -this.movementSpeed;
         }
         if (this.rightPressed) {
+            this.facingRight = true;
             this.velocity.x += this.movementSpeed;
+        }
+        if (this.leftPressed || this.rightPressed) {
+            this.isWalking = true;
+        }
+        else {
+            this.isWalking = false;
         }
         if ((this.velocity.x < 0.01 && this.velocity.x > 0) || (this.velocity.x > -0.01 && this.velocity.x < 0)) {
             this.velocity.x = 0;
         }
-        if (this.velocity.x > 0) {
-            this.facingRight = true;
-        }
-        else if (this.velocity.x < 0) {
-            this.facingRight = false;
-        }
         this.velocity.y -= GRAVITY_PER_FRAME;
         if (this.upPressed && this.isOnGround) {
             this.isOnGround = false;
+            this.jumpAnimation().then(() => {
+                this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
+            });
             this.velocity.y = this.jumpStrength;
         }
     }
-    executePlayerAction() {
+    executePlayerAction(opponent) {
         if (!this.isExecutingAction) {
             const maxKeypressTime = 2;
             if (this.attackKeyPressed < maxKeypressTime && this.attackKeyPressed > 0) {
                 this.attackKeyPressed = maxKeypressTime;
                 this.isExecutingAction = true;
-                this.attack();
+                this.attack(opponent);
             }
             else if (this.defendKeyPressed < maxKeypressTime && this.defendKeyPressed > 0) {
                 this.defendKeyPressed = maxKeypressTime;
@@ -366,6 +438,21 @@ function wait(time) {
 }
 function vwToNum(vw) {
     return parseFloat(vw.slice(0, vw.length - 2));
+}
+function preloadImage(url) {
+    const img = new Image();
+    img.src = url;
+    return new Promise((resolve, reject) => {
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+    });
+}
+function preloadImages(list) {
+    const imageList = [];
+    for (let i = 0; i < list.length; i++) {
+        const img = new Image();
+        img.src = list[i];
+    }
 }
 class Vector2 {
     constructor(x, y) {
@@ -427,20 +514,32 @@ class HitboxBase {
             ctx.stroke();
         }
     }
+    removeElement() {
+        this.element.parentNode.removeChild(this.element);
+    }
 }
 class AabbHitbox extends HitboxBase {
     constructor(displayable, relativePosition, opposite, player) {
         super(displayable, player);
         this.position = relativePosition;
         this.opposite = opposite;
+        if (displayable) {
+            const game = document.getElementsByTagName("game")[0];
+            this.element.setAttribute("height", "1000");
+            this.element.setAttribute("width", ((this.maxX + this.minX) / 100 * game.offsetWidth).toString());
+        }
     }
     display() {
+        if (this.displayable) {
+            this.createPolygon();
+            this.displayable = false;
+        }
     }
     get vectors() {
         return [
             this.position,
             Vector2.add(this.position, new Vector2(this.opposite.x, 0)),
-            this.opposite,
+            Vector2.add(this.opposite, this.position),
             Vector2.add(this.position, new Vector2(0, this.opposite.y))
         ];
     }
@@ -579,8 +678,8 @@ class PlayScreen {
         game.appendChild(floor);
         const playerOne = document.createElement("player-element", { is: "player-element" });
         const playerTwo = document.createElement("player-element", { is: "player-element" });
-        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", game);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", game);
+        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game);
         playerOne.position.y = floorHeight;
         playerTwo.position.y = floorHeight;
         playerOne.position.x = 10;
@@ -619,8 +718,8 @@ class PlayScreen {
         }
     }
     update() {
-        this.playerOne.executePlayerAction();
-        this.playerTwo.executePlayerAction();
+        this.playerOne.executePlayerAction(this.playerTwo);
+        this.playerTwo.executePlayerAction(this.playerOne);
         this.movePlayers();
     }
 }
@@ -628,6 +727,57 @@ class StartScreen {
     constructor() {
     }
     update() {
+    }
+}
+class HealthBar {
+    constructor(side, game) {
+        this._health = 100;
+        const width = 40;
+        const height = 5;
+        const offset = 0.6;
+        this.maxBarWidth = width - offset * 2;
+        this.div = document.createElement("health-bar-container");
+        const containerStyle = this.div.style;
+        containerStyle.width = width.toString() + "vw";
+        containerStyle.height = height.toString() + "vw";
+        containerStyle.position = "absolute";
+        containerStyle.backgroundColor = "lightgrey";
+        containerStyle.top = "2vw";
+        if (side === "right") {
+            containerStyle.right = "5vw";
+        }
+        else if (side === "left") {
+            containerStyle.left = "5vw";
+        }
+        else {
+            throw "exeption: the parameter 'facing' in Player.init should be either 'right' or 'left'.";
+        }
+        this.bar = document.createElement("health-bar");
+        const style = this.bar.style;
+        style.zIndex = "10";
+        style.width = this.maxBarWidth.toString() + "vw";
+        style.height = (height - offset * 2).toString() + "vw";
+        style.left = offset.toString() + "vw";
+        style.top = offset.toString() + "vw";
+        style.backgroundColor = "red";
+        style.position = "absolute";
+        this.div.appendChild(this.bar);
+        game.appendChild(this.div);
+    }
+    get health() {
+        return this._health;
+    }
+    set health(health) {
+        if (health > 100) {
+            this._health = 100;
+        }
+        else if (health < 0) {
+            this._health = 0;
+        }
+        else {
+            this._health = health;
+        }
+        this.bar.style.width = (this._health / 100 * this.maxBarWidth).toString() + "vw";
     }
 }
 //# sourceMappingURL=main.js.map

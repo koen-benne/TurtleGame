@@ -93,7 +93,6 @@ abstract class CollisionDetection {
             if (currentHitboxOne.minX > currentHitboxTwo.minX && normal.x != 0) {
                 normal.x *= -1;
                 normal.y *= -1;
-                console.log("test")
             } else if (normal.y == 1) { // Give players ability to jump off of one another
                 playerTwo.isOnGround = true;
             } else if (normal.y == -1) {
@@ -128,7 +127,7 @@ abstract class CollisionDetection {
                     addVelocityTwo.x -= overBorder;
                 }
             }
-            // If colliding with floor or ceiling
+            // If colliding with floor or ceiling of floor
             overBorder = Math.min(currentHitboxOne.minY, currentHitboxTwo.minY) - screen.floorHeight;
             if (overBorder < 0) {
                 addVelocityOne.y -= overBorder;
@@ -155,4 +154,14 @@ abstract class CollisionDetection {
             }
         }
     }
+
+
+    public static isCollidingAABB(hitbox1 : HitboxBase, hitbox2 : HitboxBase) {
+        if (hitbox1.maxX > hitbox2.minX && hitbox2.maxX > hitbox1.minX && hitbox1.maxY > hitbox2.minY && hitbox2.maxY > hitbox1.minY) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

@@ -9,17 +9,26 @@ class AabbHitbox extends HitboxBase {
 
         this.position = relativePosition;
         this.opposite = opposite;
+
+        if (displayable) {
+            const game: HTMLElement = <HTMLElement>document.getElementsByTagName("game")[0];
+            this.element.setAttribute("height", "1000");
+            this.element.setAttribute("width", ((this.maxX + this.minX) / 100 * game.offsetWidth).toString());
+        }
     }
 
     public display() {
-
+        if (this.displayable) {
+            this.createPolygon();
+            this.displayable = false;
+        }
     }
 
     public get vectors() {
         return [
             this.position,
             Vector2.add(this.position, new Vector2(this.opposite.x, 0)),
-            this.opposite,
+            Vector2.add(this.opposite, this.position),
             Vector2.add(this.position, new Vector2(0, this.opposite.y))
         ];
     }

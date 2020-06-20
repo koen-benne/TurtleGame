@@ -34,8 +34,8 @@ class PlayScreen implements ScreenBase {
         // Create players
         const playerOne = <Player>document.createElement("player-element", {is: "player-element"});
         const playerTwo = <Player>document.createElement("player-element", {is: "player-element"});
-        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", game);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", game);
+        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left","right", game);
 
         // Set start positions of players
         playerOne.position.y = floorHeight;
@@ -85,8 +85,8 @@ class PlayScreen implements ScreenBase {
 
     // Update the screen
     public update() {
-        this.playerOne.executePlayerAction();
-        this.playerTwo.executePlayerAction();
+        this.playerOne.executePlayerAction(this.playerTwo);
+        this.playerTwo.executePlayerAction(this.playerOne);
 
         this.movePlayers()
     }
