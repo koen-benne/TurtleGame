@@ -147,19 +147,19 @@ class Game {
         document.body.appendChild(this.gameElement);
         window.addEventListener("resize", () => this.setWindowHeight());
         this.setWindowHeight();
-        this.onStart();
-        this.gameLoop();
+        this.setStartScreen();
     }
     gameLoop() {
         this.currentScene.update();
         requestAnimationFrame(() => this.gameLoop());
     }
-    onStart() {
+    start() {
         this.setPlayScreen();
+        this.gameLoop();
     }
     setStartScreen() {
         this.gameElement.innerHTML = "";
-        this.currentScene = new StartScreen();
+        this.currentScene = new StartScreen(this);
     }
     setPlayScreen() {
         this.gameElement.innerHTML = "";
@@ -751,7 +751,29 @@ class PlayScreen {
     }
 }
 class StartScreen {
-    constructor() {
+    constructor(game) {
+        const playButton = document.createElement("button");
+        playButton.style.width = "30vw";
+        playButton.style.height = "10vw";
+        playButton.style.backgroundColor = "grey";
+        playButton.style.fontSize = "50px";
+        playButton.style.position = "absolute";
+        playButton.style.top = "40vh";
+        playButton.style.left = "10vw";
+        playButton.innerText = "Play";
+        playButton.addEventListener("click", () => game.start());
+        game.gameElement.appendChild(playButton);
+        const shieldButton = document.createElement("button");
+        shieldButton.style.width = "30vw";
+        shieldButton.style.height = "10vw";
+        shieldButton.style.backgroundColor = "green";
+        shieldButton.style.fontSize = "50px";
+        shieldButton.style.position = "absolute";
+        shieldButton.style.top = "40vh";
+        shieldButton.style.right = "10vw";
+        shieldButton.innerText = "Shield";
+        shieldButton.addEventListener("click", () => game.start());
+        game.gameElement.appendChild(shieldButton);
     }
     update() {
     }

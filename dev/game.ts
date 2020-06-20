@@ -20,24 +20,23 @@ class Game {
         window.addEventListener("resize", () => this.setWindowHeight());
         this.setWindowHeight();
 
-        this.onStart();
-        this.gameLoop();
+        this.setStartScreen();
     }
 
-    private gameLoop() {
-        // Todo: make this loop run a set amount of time per second
+    public gameLoop() {
         this.currentScene.update();
 
         requestAnimationFrame(() => this.gameLoop());
     }
 
-    private onStart() {
+    public start() {
         this.setPlayScreen();
+        this.gameLoop();
     }
 
     public setStartScreen() {
         this.gameElement.innerHTML = "";
-        this.currentScene = new StartScreen();
+        this.currentScene = new StartScreen(this);
     }
 
     public setPlayScreen() {
