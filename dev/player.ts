@@ -274,8 +274,7 @@ class Player extends HTMLElement {
     private async walkingAnimation() {
         const frames = 6;
             for (let i = 1; i < frames * 2; i++) {
-                if (!this.isWalking) {
-
+                if (!this.isWalking || !this.isOnGround) {
                     return;
                 }
                 let frame : number;
@@ -306,7 +305,7 @@ class Player extends HTMLElement {
             this.velocity.x += this.movementSpeed;
         }
 
-        if (this.leftPressed || this.rightPressed) {
+        if ((this.leftPressed || this.rightPressed) && this.isOnGround) {
             if (!this.isWalking) {
                 this.isWalking = true;
                 this.walkingAnimation().then(() => {
