@@ -30,9 +30,5 @@ class ShieldScreen {
             document.body.appendChild(this.script);
             this.script.src = "docs/js/shield.js";
             this.script.defer = true;
-
-
-
-
     }
 }

@@ -4,23 +4,15 @@ class HealthBar {
 
     private maxBarWidth : number;
 
-    private _health : number = 100;
-
-
-    get health() {
-        return this._health;
-    }
     set health(health : number) {
         if (health > 100) {
-            this._health = 100;
+            health = 100;
         } else if (health < 0) {
-            this._health = 0;
-        } else {
-            this._health = health;
+            health = 0;
         }
 
         // Set bar
-        this.bar.style.width = (this._health / 100 * this.maxBarWidth).toString() + "vw";
+        this.bar.style.width = (health / 100 * this.maxBarWidth).toString() + "vw";
     }
 
     constructor(side : string, game : HTMLElement) {

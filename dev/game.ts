@@ -14,6 +14,7 @@ class Game {
         style.width = "100vw";
         style.height = "50vw";
         style.margin = "0";
+        style.position = "fixed";
         document.body.appendChild(this.gameElement);
 
         window.addEventListener("resize", () => this.setWindowHeight());
