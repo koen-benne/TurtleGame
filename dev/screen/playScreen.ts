@@ -1,13 +1,13 @@
 /// <reference path="screenBase.ts"/>
 class PlayScreen implements ScreenBase {
-    private game : HTMLElement;
+    private game : Game;
 
     private readonly playerOne : Player;
     private readonly playerTwo : Player;
 
     readonly floorHeight : number;
 
-    constructor(game: HTMLElement) {
+    constructor(game: Game) {
         this.game = game;
 
         // Set floor height
@@ -23,7 +23,7 @@ class PlayScreen implements ScreenBase {
         backgroundStyle.width = "100%";
         backgroundStyle.height = "100%";
         backgroundStyle.position = "absolute";
-        game.appendChild(background);
+        game.gameElement.appendChild(background);
 
         // Set floor
         const floorHeight = this.floorHeight;
@@ -34,13 +34,13 @@ class PlayScreen implements ScreenBase {
         floorStyle.width = "100vw";
         floorStyle.height = floorHeight.toString() + "vw";
         floorStyle.bottom = "0"
-        game.appendChild(floor);
+        game.gameElement.appendChild(floor);
 
         // Create players
         const playerOne = <Player>document.createElement("player-element", {is: "player-element"});
         const playerTwo = <Player>document.createElement("player-element", {is: "player-element"});
-        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", "left", game, this);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left","right", game, this);
+        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", "left", game.gameElement, this);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left","right", game.gameElement, this);
 
         // Set start positions of players
         playerOne.position.y = floorHeight;
@@ -101,9 +101,9 @@ class PlayScreen implements ScreenBase {
         const gameOverText = document.createElement("div");
 
         if (playerId == "player-one") {
-            gameOverText.innerText = "Player One Won!";
-        } else if (playerId == "player-two") {
             gameOverText.innerText = "Player Two Won!";
+        } else if (playerId == "player-two") {
+            gameOverText.innerText = "Player One Won!";
         } else {
             gameOverText.innerText = "Player " + playerId + " Won!";
         }
@@ -114,10 +114,23 @@ class PlayScreen implements ScreenBase {
         gameOverText.style.fontSize = "7vw";
         gameOverText.style.width = "100vw";
         gameOverText.style.height = "15vw";
-        gameOverText.style.top = "45vh";
+        gameOverText.style.top = "35vh";
         gameOverText.style.textAlign = "center"
 
-        this.game.appendChild(gameOverText);
+        this.game.gameElement.appendChild(gameOverText);
+
+        const replayButton : HTMLElement = document.createElement("button");
+        replayButton.style.width = "30vw";
+        replayButton.style.height = "10vw";
+        replayButton.style.backgroundColor = "red";
+        replayButton.style.fontSize = "50px";
+        replayButton.style.position = "absolute";
+        replayButton.style.top = "50vh";
+        replayButton.style.left = "35vw";
+        replayButton.innerText = "Play";
+        replayButton.addEventListener("click", () => this.game.setPlayScreen());
+        this.game.gameElement.appendChild(replayButton);
+
     }
 
 }
