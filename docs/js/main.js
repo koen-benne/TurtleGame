@@ -167,7 +167,7 @@ class Game {
     }
     setPlayScreen() {
         this.gameElement.innerHTML = "";
-        this.currentScene = new PlayScreen(this.gameElement);
+        this.currentScene = new PlayScreen(this);
     }
     setWindowHeight() {
         gameHeightInVw = window.innerHeight / (window.innerWidth / 100);
@@ -381,7 +381,7 @@ class Player extends HTMLElement {
         return __awaiter(this, void 0, void 0, function* () {
             this.isExecutingAction = true;
             if (this.isDefending) {
-                amount /= 2;
+                amount = 0;
             }
             if (this.health <= 0) {
                 return;
@@ -434,7 +434,7 @@ class Player extends HTMLElement {
     }
     attack(opponent) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Attack.png')";
             let attackHitbox;
             const reach = 5;
             const hitbox = this.hitbox;
@@ -445,19 +445,19 @@ class Player extends HTMLElement {
                 attackHitbox = new AabbHitbox(false, new Vector2(-reach, hitbox.minY), new Vector2(0, hitbox.maxY), this);
             }
             if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position), attackHitbox.getCurrentHitbox(this.position))) {
-                opponent.damage(7, 3, this);
+                opponent.damage(7, 5, this);
             }
-            yield wait(100);
+            yield wait(300);
             this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
-            yield wait(50);
+            yield wait(100);
             this.isExecutingAction = false;
         });
     }
     defend() {
         return __awaiter(this, void 0, void 0, function* () {
             this.isDefending = true;
-            this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-            yield wait(300);
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Defend.png')";
+            yield wait(200);
             this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
             yield wait(50);
             this.isDefending = false;
@@ -790,7 +790,7 @@ class PlayScreen {
         backgroundStyle.width = "100%";
         backgroundStyle.height = "100%";
         backgroundStyle.position = "absolute";
-        game.appendChild(background);
+        game.gameElement.appendChild(background);
         const floorHeight = this.floorHeight;
         const floor = document.createElement("floor");
         const floorStyle = floor.style;
@@ -798,11 +798,11 @@ class PlayScreen {
         floorStyle.width = "100vw";
         floorStyle.height = floorHeight.toString() + "vw";
         floorStyle.bottom = "0";
-        game.appendChild(floor);
+        game.gameElement.appendChild(floor);
         const playerOne = document.createElement("player-element", { is: "player-element" });
         const playerTwo = document.createElement("player-element", { is: "player-element" });
-        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game, this);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game, this);
+        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game.gameElement, this);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game.gameElement, this);
         playerOne.position.y = floorHeight;
         playerTwo.position.y = floorHeight;
         playerOne.position.x = 10;
@@ -848,10 +848,10 @@ class PlayScreen {
     gameOver(playerId) {
         const gameOverText = document.createElement("div");
         if (playerId == "player-one") {
-            gameOverText.innerText = "Player One Won!";
+            gameOverText.innerText = "Player Two Won!";
         }
         else if (playerId == "player-two") {
-            gameOverText.innerText = "Player Two Won!";
+            gameOverText.innerText = "Player One Won!";
         }
         else {
             gameOverText.innerText = "Player " + playerId + " Won!";
@@ -863,9 +863,20 @@ class PlayScreen {
         gameOverText.style.fontSize = "7vw";
         gameOverText.style.width = "100vw";
         gameOverText.style.height = "15vw";
-        gameOverText.style.top = "45vh";
+        gameOverText.style.top = "35vh";
         gameOverText.style.textAlign = "center";
-        this.game.appendChild(gameOverText);
+        this.game.gameElement.appendChild(gameOverText);
+        const replayButton = document.createElement("button");
+        replayButton.style.width = "30vw";
+        replayButton.style.height = "10vw";
+        replayButton.style.backgroundColor = "red";
+        replayButton.style.fontSize = "50px";
+        replayButton.style.position = "absolute";
+        replayButton.style.top = "50vh";
+        replayButton.style.left = "35vw";
+        replayButton.innerText = "Play";
+        replayButton.addEventListener("click", () => this.game.setPlayScreen());
+        this.game.gameElement.appendChild(replayButton);
     }
 }
 class ShieldScreen {

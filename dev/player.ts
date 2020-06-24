@@ -225,7 +225,7 @@ class Player extends HTMLElement {
         this.isExecutingAction = true;
 
         if (this.isDefending) {
-            amount /= 2;
+            amount = 0;
         }
 
         if (this.health <= 0) {
@@ -291,7 +291,7 @@ class Player extends HTMLElement {
 
     // Attack action
     private async attack(opponent : Player) {
-        this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
+        this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Attack.png')";
         let attackHitbox : AabbHitbox;
         const reach = 5;
         const hitbox = this.hitbox;
@@ -302,20 +302,20 @@ class Player extends HTMLElement {
         }
         if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position),
             attackHitbox.getCurrentHitbox(this.position))) {
-            opponent.damage(7,3, this);
+            opponent.damage(7,5, this);
         }
-        await wait(100);
+        await wait(300);
         this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
 
-        await wait(50);
+        await wait(100);
         this.isExecutingAction = false;
     }
 
     // Defend action
     private async defend() {
         this.isDefending = true;
-        this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-        await wait(300);
+        this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Defend.png')";
+        await wait(200);
         this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
         await wait(50);
         this.isDefending = false;

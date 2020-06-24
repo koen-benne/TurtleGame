@@ -46,7 +46,7 @@ class Game {
 
     public setPlayScreen() {
         this.gameElement.innerHTML = "";
-        this.currentScene = new PlayScreen(this.gameElement);
+        this.currentScene = new PlayScreen(this);
     }
 
     public setWindowHeight() {
