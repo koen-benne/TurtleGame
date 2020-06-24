@@ -19,7 +19,7 @@ abstract class CollisionDetection {
 
             // Set normal
             if (overlap == overlapX) {
-                    normal = new Vector2(1, 0);
+                normal = new Vector2(1, 0);
             }
             else {
                 // If player one is left
@@ -30,7 +30,7 @@ abstract class CollisionDetection {
                 }
             }
 
-            // If both hitboxes are convex hitboxes
+            // If one or both hitboxes are convex hitboxes
             if (currentHitboxOne instanceof ConvexHitbox || currentHitboxTwo instanceof ConvexHitbox) {
                 // Separating axis theorem stuff starts here!
 

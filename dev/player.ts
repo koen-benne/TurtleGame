@@ -2,6 +2,8 @@ class Player extends HTMLElement {
     public hitbox : HitboxBase;
     public healthBar : HealthBar;
 
+    private screen : PlayScreen;
+
     public body : string;
     public image: HTMLElement;
 
@@ -33,6 +35,7 @@ class Player extends HTMLElement {
     public upPressed : boolean = false;
     public leftPressed : boolean = false;
     public rightPressed : boolean = false;
+    private isDefending: boolean;
 
 
     constructor() {
@@ -45,9 +48,11 @@ class Player extends HTMLElement {
     }
 
     // Initialise the player, unfortunately this can't be done inside the constructor as player is an instance of HTMLElement
-    public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, healthBarSide : string, game : HTMLElement) {
+    public init(maxHealth : number, attackKey : string, defendKey : string, upKey : string, leftKey : string, rightKey : string, id : string, facing : string, healthBarSide : string, game : HTMLElement, screen : PlayScreen) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
+
+        this.screen = screen;
 
         // Set orientation
         if(facing === "right") {
@@ -103,6 +108,7 @@ class Player extends HTMLElement {
 
 
         // Initialize image element
+        //imageStyle.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
         imageStyle.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
         imageStyle.backgroundRepeat = "no-repeat"
         const playerHeight : number = 19.5;
@@ -146,7 +152,7 @@ class Player extends HTMLElement {
     }
 
 
-    // Renders position to grid
+    // Renders position
     public render() {
         this.style.left = this.position.x.toString() + "vw";
 
@@ -166,22 +172,28 @@ class Player extends HTMLElement {
 
     // Keeps track of pressed keys
     private keyDown(event : KeyboardEvent) {
-        switch (event.code) {
-            case this.upKey: {
-                this.upPressed = true;
-                break;
-            } case this.rightKey: {
-                this.rightPressed = true;
-                break;
-            } case this.leftKey: {
-                this.leftPressed = true;
-                break;
-            } case this.attackKey: {
-                this.attackKeyPressed += 1;
-                break;
-            } case this.defendKey: {
-                this.defendKeyPressed+= 1;
-                break;
+        if (this.health > 0) {
+            switch (event.code) {
+                case this.upKey: {
+                    this.upPressed = true;
+                    break;
+                }
+                case this.rightKey: {
+                    this.rightPressed = true;
+                    break;
+                }
+                case this.leftKey: {
+                    this.leftPressed = true;
+                    break;
+                }
+                case this.attackKey: {
+                    this.attackKeyPressed += 1;
+                    break;
+                }
+                case this.defendKey: {
+                    this.defendKeyPressed += 1;
+                    break;
+                }
             }
         }
     }
@@ -211,18 +223,71 @@ class Player extends HTMLElement {
     // Damages this player
     public async damage(amount: number, knockBack : number, opponent : Player) {
         this.isExecutingAction = true;
-        this.health -= amount;
-        if (opponent.position.x <= this.position.x) {
-            this.velocity.x += knockBack;
-        } else {
-            this.velocity.x -= knockBack;
+
+        if (this.isDefending) {
+            amount /= 2;
         }
-        await wait(130); // Cooldown for being damaged
-        this.isExecutingAction = false;
+
+        if (this.health <= 0) {
+            return
+        }
+        this.health -= amount;
+
+        if (this.health <= 0) {
+            this.die();
+        }
+        else if (!this.isDefending) {
+
+            const images = [];
+            for (let i = 1; i <= 6; i++) {
+                images.push("docs/img/turtle/" + this.body + "/Damaged" + i + ".png");
+            }
+            preloadImages(images);
+
+            if (opponent.position.x <= this.position.x) {
+                this.velocity.x += knockBack;
+            } else {
+                this.velocity.x -= knockBack;
+            }
+
+            for (let i = 0; i < 6; i++) {
+                this.image.style.backgroundImage = "url('" + images[i] + "')";
+                await wait(40);
+            }
+
+            this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
+
+            this.isExecutingAction = false;
+        }
 
         this.healthBar.health = this.health;
+
     }
 
+    // Die animation and stops game
+    private async die() {
+
+        const images = [];
+        for (let i = 0; i <= 14; i++) {
+            images.push("docs/img/turtle/" + this.body + "/Dying" + i + ".png");
+        }
+
+        preloadImages(images);
+
+        if (this.facingRight) {
+            this.hitbox = new AabbHitbox(false, new Vector2(-6.4, 0), new Vector2(8, 6), this);
+        } else {
+            this.hitbox = new AabbHitbox(false, new Vector2(0, 0), new Vector2(14.4, 6), this);
+        }
+
+        for (let i = 0; i < images.length; i++) {
+            this.image.style.backgroundImage = "url('" + images[i] + "')";
+            await wait(35);
+        }
+
+        this.screen.gameOver(this.id);
+
+    }
 
     // Attack action
     private async attack(opponent : Player) {
@@ -237,7 +302,7 @@ class Player extends HTMLElement {
         }
         if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position),
             attackHitbox.getCurrentHitbox(this.position))) {
-            opponent.damage(5,3, this);
+            opponent.damage(7,3, this);
         }
         await wait(100);
         this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
@@ -248,10 +313,12 @@ class Player extends HTMLElement {
 
     // Defend action
     private async defend() {
+        this.isDefending = true;
         this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-        await wait(100);
+        await wait(300);
         this.image.style.backgroundImage = "url('docs/img/turtle/"+ this.body +"/Default.png')";
         await wait(50);
+        this.isDefending = false;
         this.isExecutingAction = false;
     }
 
@@ -259,7 +326,7 @@ class Player extends HTMLElement {
     // Execute jump animation
     private async jumpAnimation() {
         for(let i = 1; i <= 4; i++) {
-            if (this.isOnGround) {
+            if (this.isOnGround || this.health <= 0) {
                 return;
             }
             await wait(30);
@@ -274,7 +341,7 @@ class Player extends HTMLElement {
     private async walkingAnimation() {
         const frames = 6;
             for (let i = 1; i < frames * 2; i++) {
-                if (!this.isWalking || !this.isOnGround) {
+                if (!this.isWalking || !this.isOnGround || this.health <= 0) {
                     return;
                 }
                 let frame : number;
@@ -305,7 +372,7 @@ class Player extends HTMLElement {
         }
 
         // For walking animation
-        if ((this.leftPressed || this.rightPressed) && this.isOnGround) {
+        if ((this.leftPressed != this.rightPressed) && this.isOnGround) {
             if (!this.isWalking) {
                 this.isWalking = true;
                 this.walkingAnimation().then(() => {
