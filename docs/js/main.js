@@ -8,158 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const GRAVITY_PER_FRAME = 0.1;
-const FRICTION = 0.4;
-let gameHeightInVw;
-class Game {
-    constructor() {
-        this.gameElement = document.createElement("game");
-        const style = this.gameElement.style;
-        style.width = "100vw";
-        style.height = "50vw";
-        style.margin = "0";
-        document.body.appendChild(this.gameElement);
-        window.addEventListener("resize", () => this.setWindowHeight());
-        this.setWindowHeight();
-        this.setStartScreen();
-    }
-    gameLoop() {
-        this.currentScene.update();
-        requestAnimationFrame(() => this.gameLoop());
-    }
-    start() {
-        this.setPlayScreen();
-        this.gameLoop();
-    }
-    setShieldScreen() {
-        this.gameElement.innerHTML = "";
-        this.currentScene = new ShieldScreen(this);
-    }
-    setStartScreen() {
-        this.gameElement.innerHTML = "";
-        this.currentScene = new StartScreen(this);
-    }
-    setPlayScreen() {
-        this.gameElement.innerHTML = "";
-        this.currentScene = new PlayScreen(this.gameElement);
-    }
-    setWindowHeight() {
-        gameHeightInVw = window.innerHeight / (window.innerWidth / 100);
-        this.gameElement.style.height = gameHeightInVw.toString() + "vw";
-    }
-}
-window.addEventListener("load", () => new Game());
-function wait(time) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve();
-        }, time);
-    });
-}
-function vwToNum(vw) {
-    return parseFloat(vw.slice(0, vw.length - 2));
-}
-function preloadImages(list) {
-    const imageList = [];
-    for (let i = 0; i < list.length; i++) {
-        const img = new Image();
-        img.src = list[i];
-    }
-}
-class PlayScreen {
-    constructor(game) {
-        this.floorHeight = 6;
-        const background = document.createElement("background");
-        const backgroundStyle = background.style;
-        backgroundStyle.backgroundColor = "blue";
-        backgroundStyle.width = "100%";
-        backgroundStyle.height = "100%";
-        backgroundStyle.position = "absolute";
-        game.appendChild(background);
-        const floorHeight = this.floorHeight;
-        const floor = document.createElement("floor");
-        const floorStyle = floor.style;
-        floorStyle.backgroundColor = "green";
-        floorStyle.position = "absolute";
-        floorStyle.width = "100vw";
-        floorStyle.height = floorHeight.toString() + "vw";
-        floorStyle.bottom = "0";
-        game.appendChild(floor);
-        const playerOne = document.createElement("player-element", { is: "player-element" });
-        const playerTwo = document.createElement("player-element", { is: "player-element" });
-        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game);
-        playerOne.position.y = floorHeight;
-        playerTwo.position.y = floorHeight;
-        playerOne.position.x = 10;
-        playerTwo.position.x = 85;
-        this.playerOne = playerOne;
-        this.playerTwo = playerTwo;
-    }
-    movePlayers() {
-        const playerOne = this.playerOne;
-        const playerTwo = this.playerTwo;
-        playerOne.calculateVelocity();
-        playerTwo.calculateVelocity();
-        this.keepPlayerInBounds(playerOne);
-        this.keepPlayerInBounds(playerTwo);
-        CollisionDetection.collide(playerOne, playerTwo, this);
-        playerOne.applyVelocity();
-        playerTwo.applyVelocity();
-        playerOne.render();
-        playerTwo.render();
-    }
-    keepPlayerInBounds(player) {
-        const position = player.position;
-        const velocity = player.velocity;
-        if (player.newPosition.y < this.floorHeight) {
-            velocity.y = this.floorHeight - position.y;
-            player.isOnGround = true;
-        }
-        else if (player.newPosition.y + player.hitbox.maxY > gameHeightInVw) {
-            velocity.y = gameHeightInVw - player.hitbox.maxY - position.y;
-        }
-        if (player.newPosition.x < 0) {
-            velocity.x = -position.x;
-        }
-        else if (player.newPosition.x + player.hitbox.maxX > 100) {
-            velocity.x = 100 - player.hitbox.maxX - position.x;
-        }
-    }
-    update() {
-        this.playerOne.executePlayerAction(this.playerTwo);
-        this.playerTwo.executePlayerAction(this.playerOne);
-        this.movePlayers();
-    }
-}
-class StartScreen {
-    constructor(game) {
-        const playButton = document.createElement("button");
-        playButton.style.width = "30vw";
-        playButton.style.height = "10vw";
-        playButton.style.backgroundColor = "grey";
-        playButton.style.fontSize = "50px";
-        playButton.style.position = "absolute";
-        playButton.style.top = "40vh";
-        playButton.style.left = "10vw";
-        playButton.innerText = "Play";
-        playButton.addEventListener("click", () => game.start());
-        game.gameElement.appendChild(playButton);
-        const shieldButton = document.createElement("button");
-        shieldButton.style.width = "30vw";
-        shieldButton.style.height = "10vw";
-        shieldButton.style.backgroundColor = "green";
-        shieldButton.style.fontSize = "50px";
-        shieldButton.style.position = "absolute";
-        shieldButton.style.top = "40vh";
-        shieldButton.style.right = "10vw";
-        shieldButton.innerText = "Shield";
-        shieldButton.addEventListener("click", () => game.setShieldScreen());
-        game.gameElement.appendChild(shieldButton);
-    }
-    update() {
-    }
-}
 class CollisionDetection {
     static collide(playerOne, playerTwo, screen) {
         let currentHitboxOne = playerOne.hitbox.getCurrentHitbox(Vector2.add(playerOne.position, playerOne.velocity));
@@ -285,6 +133,47 @@ class CollisionDetection {
         }
     }
 }
+const GRAVITY_PER_FRAME = 0.1;
+const FRICTION = 0.4;
+let gameHeightInVw;
+class Game {
+    constructor() {
+        this.gameElement = document.createElement("game");
+        const style = this.gameElement.style;
+        style.width = "100vw";
+        style.height = "50vw";
+        style.margin = "0";
+        document.body.appendChild(this.gameElement);
+        window.addEventListener("resize", () => this.setWindowHeight());
+        this.setWindowHeight();
+        this.setStartScreen();
+    }
+    gameLoop() {
+        this.currentScene.update();
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    start() {
+        this.setPlayScreen();
+        this.gameLoop();
+    }
+    setShieldScreen() {
+        this.gameElement.innerHTML = "";
+        this.currentScene = new ShieldScreen(this);
+    }
+    setStartScreen() {
+        this.gameElement.innerHTML = "";
+        this.currentScene = new StartScreen(this);
+    }
+    setPlayScreen() {
+        this.gameElement.innerHTML = "";
+        this.currentScene = new PlayScreen(this.gameElement);
+    }
+    setWindowHeight() {
+        gameHeightInVw = window.innerHeight / (window.innerWidth / 100);
+        this.gameElement.style.height = gameHeightInVw.toString() + "vw";
+    }
+}
+window.addEventListener("load", () => new Game());
 class HealthBar {
     constructor(side, game) {
         this._health = 100;
@@ -630,6 +519,23 @@ class Player extends HTMLElement {
     }
 }
 customElements.define('player-element', Player);
+function wait(time) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, time);
+    });
+}
+function vwToNum(vw) {
+    return parseFloat(vw.slice(0, vw.length - 2));
+}
+function preloadImages(list) {
+    const imageList = [];
+    for (let i = 0; i < list.length; i++) {
+        const img = new Image();
+        img.src = list[i];
+    }
+}
 class Vector2 {
     constructor(x, y) {
         this.x = x;
@@ -833,6 +739,72 @@ class ConvexHitbox extends HitboxBase {
         return 1 / -((vector1.y - vector2.y) / (vector1.x - vector2.x));
     }
 }
+class PlayScreen {
+    constructor(game) {
+        this.floorHeight = 6;
+        const background = document.createElement("background");
+        const backgroundStyle = background.style;
+        backgroundStyle.backgroundColor = "blue";
+        backgroundStyle.width = "100%";
+        backgroundStyle.height = "100%";
+        backgroundStyle.position = "absolute";
+        game.appendChild(background);
+        const floorHeight = this.floorHeight;
+        const floor = document.createElement("floor");
+        const floorStyle = floor.style;
+        floorStyle.backgroundColor = "green";
+        floorStyle.position = "absolute";
+        floorStyle.width = "100vw";
+        floorStyle.height = floorHeight.toString() + "vw";
+        floorStyle.bottom = "0";
+        game.appendChild(floor);
+        const playerOne = document.createElement("player-element", { is: "player-element" });
+        const playerTwo = document.createElement("player-element", { is: "player-element" });
+        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game);
+        playerOne.position.y = floorHeight;
+        playerTwo.position.y = floorHeight;
+        playerOne.position.x = 10;
+        playerTwo.position.x = 85;
+        this.playerOne = playerOne;
+        this.playerTwo = playerTwo;
+    }
+    movePlayers() {
+        const playerOne = this.playerOne;
+        const playerTwo = this.playerTwo;
+        playerOne.calculateVelocity();
+        playerTwo.calculateVelocity();
+        this.keepPlayerInBounds(playerOne);
+        this.keepPlayerInBounds(playerTwo);
+        CollisionDetection.collide(playerOne, playerTwo, this);
+        playerOne.applyVelocity();
+        playerTwo.applyVelocity();
+        playerOne.render();
+        playerTwo.render();
+    }
+    keepPlayerInBounds(player) {
+        const position = player.position;
+        const velocity = player.velocity;
+        if (player.newPosition.y < this.floorHeight) {
+            velocity.y = this.floorHeight - position.y;
+            player.isOnGround = true;
+        }
+        else if (player.newPosition.y + player.hitbox.maxY > gameHeightInVw) {
+            velocity.y = gameHeightInVw - player.hitbox.maxY - position.y;
+        }
+        if (player.newPosition.x < 0) {
+            velocity.x = -position.x;
+        }
+        else if (player.newPosition.x + player.hitbox.maxX > 100) {
+            velocity.x = 100 - player.hitbox.maxX - position.x;
+        }
+    }
+    update() {
+        this.playerOne.executePlayerAction(this.playerTwo);
+        this.playerTwo.executePlayerAction(this.playerOne);
+        this.movePlayers();
+    }
+}
 class ShieldScreen {
     constructor(g) {
         this.game = g;
@@ -855,6 +827,34 @@ class ShieldScreen {
         document.body.appendChild(this.script);
         this.script.src = "docs/js/shield.js";
         this.script.defer = true;
+    }
+}
+class StartScreen {
+    constructor(game) {
+        const playButton = document.createElement("button");
+        playButton.style.width = "30vw";
+        playButton.style.height = "10vw";
+        playButton.style.backgroundColor = "grey";
+        playButton.style.fontSize = "50px";
+        playButton.style.position = "absolute";
+        playButton.style.top = "40vh";
+        playButton.style.left = "10vw";
+        playButton.innerText = "Play";
+        playButton.addEventListener("click", () => game.start());
+        game.gameElement.appendChild(playButton);
+        const shieldButton = document.createElement("button");
+        shieldButton.style.width = "30vw";
+        shieldButton.style.height = "10vw";
+        shieldButton.style.backgroundColor = "green";
+        shieldButton.style.fontSize = "50px";
+        shieldButton.style.position = "absolute";
+        shieldButton.style.top = "40vh";
+        shieldButton.style.right = "10vw";
+        shieldButton.innerText = "Shield";
+        shieldButton.addEventListener("click", () => game.setShieldScreen());
+        game.gameElement.appendChild(shieldButton);
+    }
+    update() {
     }
 }
 //# sourceMappingURL=main.js.map
