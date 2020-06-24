@@ -8,7 +8,7 @@ class Cycle{
         this.objects = objects;
         this.right();
         this.cycle.style.backgroundColor = "black"
-        this.cycle.style.width = "100%"
+        this.cycle.style.width = "50%"
         this.cycle.style.height = "33%"
         this.cycle.style.position = "absolute"
         this.cycle.style.transform = `translate(, ${this.cycleHeight}%)`;

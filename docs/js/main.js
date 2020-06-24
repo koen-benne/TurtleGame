@@ -7,7 +7,7 @@ class Cycle {
         this.objects = objects;
         this.right();
         this.cycle.style.backgroundColor = "black";
-        this.cycle.style.width = "100%";
+        this.cycle.style.width = "50%";
         this.cycle.style.height = "33%";
         this.cycle.style.position = "absolute";
         this.cycle.style.transform = `translate(, ${this.cycleHeight}%)`;
@@ -142,13 +142,13 @@ class Ready {
         readystyle.position = `absolute`;
         readystyle.transform = `translate(40vw,80vh)`;
         readystyle.width = `20vw`;
-        readystyle.height = `10vh`;
+        readystyle.height = `6vw`;
         readystyle.borderRadius = `20px`;
-        ready.innerText = `Ready Bithces`;
+        ready.innerText = `Ready`;
         readystyle.textAlign = `center`;
         readystyle.textTransform = `uppercase`;
         readystyle.color = `white`;
-        readystyle.fontSize = `40px`;
+        readystyle.fontSize = `5vw`;
         readystyle;
         document.addEventListener(`click`, event => this.click(event));
         game.appendChild(ready);
@@ -164,15 +164,16 @@ class PlayerCreatorScreen {
     constructor(game) {
         const background = document.createElement("background");
         const backgroundStyle = background.style;
-        backgroundStyle.backgroundColor = "green";
-        backgroundStyle.width = "100%";
-        backgroundStyle.height = "100%";
+        backgroundStyle.backgroundImage = `url("docs/img/bg.png")`;
+        backgroundStyle.backgroundSize = `cover`;
+        backgroundStyle.width = "100vw";
+        backgroundStyle.height = "100vh";
         backgroundStyle.position = "absolute";
         game.appendChild(background);
         let playerCreator1 = new PlayerCreator(game, 'KeyW', 'KeyS', 'KeyA', 'KeyD');
         let playerCreator2 = new PlayerCreator(game, 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight');
-        playerCreator1.creator.style.transform = `translate(0vw, 0vh)`;
-        playerCreator2.creator.style.transform = `translate(50vw, 0vh)`;
+        playerCreator1.creator.style.left = `10vw`;
+        playerCreator2.creator.style.right = `-15vw`;
         let ready = new Ready(game);
     }
     update() {

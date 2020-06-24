@@ -6,18 +6,18 @@ class Ready{
         readystyle.position = `absolute`;
         readystyle.transform = `translate(40vw,80vh)`
         readystyle.width = `20vw`;
-        readystyle.height = `10vh`;
+        readystyle.height = `6vw`;
         readystyle.borderRadius = `20px`
-        ready.innerText = `Ready Bithces`
+        ready.innerText = `Ready`
         readystyle.textAlign = `center`
         readystyle.textTransform = `uppercase`
         readystyle.color = `white`
-        readystyle.fontSize = `40px`
+        readystyle.fontSize = `5vw`
         readystyle
         document.addEventListener(`click`, event => this.click(event))
         game.appendChild(ready);
     }
     click(event : MouseEvent){
-        
+
     }
 }
