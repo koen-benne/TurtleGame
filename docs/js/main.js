@@ -143,6 +143,7 @@ class Game {
         style.width = "100vw";
         style.height = "50vw";
         style.margin = "0";
+        style.position = "fixed";
         document.body.appendChild(this.gameElement);
         window.addEventListener("resize", () => this.setWindowHeight());
         this.setWindowHeight();
@@ -176,7 +177,6 @@ class Game {
 window.addEventListener("load", () => new Game());
 class HealthBar {
     constructor(side, game) {
-        this._health = 100;
         const width = 40;
         const height = 5;
         const offset = 0.6;
@@ -210,20 +210,14 @@ class HealthBar {
         this.div.appendChild(this.bar);
         game.appendChild(this.div);
     }
-    get health() {
-        return this._health;
-    }
     set health(health) {
         if (health > 100) {
-            this._health = 100;
+            health = 100;
         }
         else if (health < 0) {
-            this._health = 0;
+            health = 0;
         }
-        else {
-            this._health = health;
-        }
-        this.bar.style.width = (this._health / 100 * this.maxBarWidth).toString() + "vw";
+        this.bar.style.width = (health / 100 * this.maxBarWidth).toString() + "vw";
     }
 }
 class Player extends HTMLElement {
@@ -245,9 +239,10 @@ class Player extends HTMLElement {
     get newPosition() {
         return Vector2.add(this.position, this.velocity);
     }
-    init(maxHealth, attackKey, defendKey, upKey, leftKey, rightKey, id, facing, healthBarSide, game) {
+    init(maxHealth, attackKey, defendKey, upKey, leftKey, rightKey, id, facing, healthBarSide, game, screen) {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
+        this.screen = screen;
         if (facing === "right") {
             this.facingRight = true;
         }
@@ -333,26 +328,28 @@ class Player extends HTMLElement {
         this.hitbox.display();
     }
     keyDown(event) {
-        switch (event.code) {
-            case this.upKey: {
-                this.upPressed = true;
-                break;
-            }
-            case this.rightKey: {
-                this.rightPressed = true;
-                break;
-            }
-            case this.leftKey: {
-                this.leftPressed = true;
-                break;
-            }
-            case this.attackKey: {
-                this.attackKeyPressed += 1;
-                break;
-            }
-            case this.defendKey: {
-                this.defendKeyPressed += 1;
-                break;
+        if (this.health > 0) {
+            switch (event.code) {
+                case this.upKey: {
+                    this.upPressed = true;
+                    break;
+                }
+                case this.rightKey: {
+                    this.rightPressed = true;
+                    break;
+                }
+                case this.leftKey: {
+                    this.leftPressed = true;
+                    break;
+                }
+                case this.attackKey: {
+                    this.attackKeyPressed += 1;
+                    break;
+                }
+                case this.defendKey: {
+                    this.defendKeyPressed += 1;
+                    break;
+                }
             }
         }
     }
@@ -383,16 +380,56 @@ class Player extends HTMLElement {
     damage(amount, knockBack, opponent) {
         return __awaiter(this, void 0, void 0, function* () {
             this.isExecutingAction = true;
+            if (this.isDefending) {
+                amount /= 2;
+            }
+            if (this.health <= 0) {
+                return;
+            }
             this.health -= amount;
-            if (opponent.position.x <= this.position.x) {
-                this.velocity.x += knockBack;
+            if (this.health <= 0) {
+                this.die();
+            }
+            else if (!this.isDefending) {
+                const images = [];
+                for (let i = 1; i <= 6; i++) {
+                    images.push("docs/img/turtle/" + this.body + "/Damaged" + i + ".png");
+                }
+                preloadImages(images);
+                if (opponent.position.x <= this.position.x) {
+                    this.velocity.x += knockBack;
+                }
+                else {
+                    this.velocity.x -= knockBack;
+                }
+                for (let i = 0; i < 6; i++) {
+                    this.image.style.backgroundImage = "url('" + images[i] + "')";
+                    yield wait(40);
+                }
+                this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
+                this.isExecutingAction = false;
+            }
+            this.healthBar.health = this.health;
+        });
+    }
+    die() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const images = [];
+            for (let i = 0; i <= 14; i++) {
+                images.push("docs/img/turtle/" + this.body + "/Dying" + i + ".png");
+            }
+            preloadImages(images);
+            if (this.facingRight) {
+                this.hitbox = new AabbHitbox(false, new Vector2(-6.4, 0), new Vector2(8, 6), this);
             }
             else {
-                this.velocity.x -= knockBack;
+                this.hitbox = new AabbHitbox(false, new Vector2(0, 0), new Vector2(14.4, 6), this);
             }
-            yield wait(130);
-            this.isExecutingAction = false;
-            this.healthBar.health = this.health;
+            for (let i = 0; i < images.length; i++) {
+                this.image.style.backgroundImage = "url('" + images[i] + "')";
+                yield wait(35);
+            }
+            this.screen.gameOver(this.id);
         });
     }
     attack(opponent) {
@@ -408,7 +445,7 @@ class Player extends HTMLElement {
                 attackHitbox = new AabbHitbox(false, new Vector2(-reach, hitbox.minY), new Vector2(0, hitbox.maxY), this);
             }
             if (CollisionDetection.isCollidingAABB(opponent.hitbox.getCurrentHitbox(opponent.position), attackHitbox.getCurrentHitbox(this.position))) {
-                opponent.damage(5, 3, this);
+                opponent.damage(7, 3, this);
             }
             yield wait(100);
             this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
@@ -418,17 +455,19 @@ class Player extends HTMLElement {
     }
     defend() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.isDefending = true;
             this.image.style.backgroundImage = "url('docs/img/Green-dummy-texture.png')";
-            yield wait(100);
+            yield wait(300);
             this.image.style.backgroundImage = "url('docs/img/turtle/" + this.body + "/Default.png')";
             yield wait(50);
+            this.isDefending = false;
             this.isExecutingAction = false;
         });
     }
     jumpAnimation() {
         return __awaiter(this, void 0, void 0, function* () {
             for (let i = 1; i <= 4; i++) {
-                if (this.isOnGround) {
+                if (this.isOnGround || this.health <= 0) {
                     return;
                 }
                 yield wait(30);
@@ -443,7 +482,7 @@ class Player extends HTMLElement {
         return __awaiter(this, void 0, void 0, function* () {
             const frames = 6;
             for (let i = 1; i < frames * 2; i++) {
-                if (!this.isWalking || !this.isOnGround) {
+                if (!this.isWalking || !this.isOnGround || this.health <= 0) {
                     return;
                 }
                 let frame;
@@ -470,7 +509,7 @@ class Player extends HTMLElement {
             this.facingRight = true;
             this.velocity.x += this.movementSpeed;
         }
-        if ((this.leftPressed || this.rightPressed) && this.isOnGround) {
+        if ((this.leftPressed != this.rightPressed) && this.isOnGround) {
             if (!this.isWalking) {
                 this.isWalking = true;
                 this.walkingAnimation().then(() => {
@@ -741,10 +780,13 @@ class ConvexHitbox extends HitboxBase {
 }
 class PlayScreen {
     constructor(game) {
-        this.floorHeight = 6;
+        this.game = game;
+        this.floorHeight = 3.6;
         const background = document.createElement("background");
         const backgroundStyle = background.style;
-        backgroundStyle.backgroundColor = "blue";
+        backgroundStyle.backgroundImage = "url('docs/img/background.png')";
+        backgroundStyle.backgroundRepeat = "no-repeat";
+        backgroundStyle.backgroundSize = "100% 100%";
         backgroundStyle.width = "100%";
         backgroundStyle.height = "100%";
         backgroundStyle.position = "absolute";
@@ -752,7 +794,6 @@ class PlayScreen {
         const floorHeight = this.floorHeight;
         const floor = document.createElement("floor");
         const floorStyle = floor.style;
-        floorStyle.backgroundColor = "green";
         floorStyle.position = "absolute";
         floorStyle.width = "100vw";
         floorStyle.height = floorHeight.toString() + "vw";
@@ -760,8 +801,8 @@ class PlayScreen {
         game.appendChild(floor);
         const playerOne = document.createElement("player-element", { is: "player-element" });
         const playerTwo = document.createElement("player-element", { is: "player-element" });
-        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game);
+        playerOne.init(100, "KeyU", "KeyY", "KeyW", "KeyA", "KeyD", "player-one", "right", "left", game, this);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left", "right", game, this);
         playerOne.position.y = floorHeight;
         playerTwo.position.y = floorHeight;
         playerOne.position.x = 10;
@@ -803,6 +844,28 @@ class PlayScreen {
         this.playerOne.executePlayerAction(this.playerTwo);
         this.playerTwo.executePlayerAction(this.playerOne);
         this.movePlayers();
+    }
+    gameOver(playerId) {
+        const gameOverText = document.createElement("div");
+        if (playerId == "player-one") {
+            gameOverText.innerText = "Player One Won!";
+        }
+        else if (playerId == "player-two") {
+            gameOverText.innerText = "Player Two Won!";
+        }
+        else {
+            gameOverText.innerText = "Player " + playerId + " Won!";
+        }
+        gameOverText.style.position = "absolute";
+        gameOverText.style.fontFamily = "arial";
+        gameOverText.style.fontWeight = "bold";
+        gameOverText.style.color = "red";
+        gameOverText.style.fontSize = "7vw";
+        gameOverText.style.width = "100vw";
+        gameOverText.style.height = "15vw";
+        gameOverText.style.top = "45vh";
+        gameOverText.style.textAlign = "center";
+        this.game.appendChild(gameOverText);
     }
 }
 class ShieldScreen {
