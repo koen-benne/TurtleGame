@@ -1,20 +1,25 @@
 /// <reference path="screenBase.ts"/>
 class PlayScreen implements ScreenBase {
+    private game : HTMLElement;
+
     private readonly playerOne : Player;
     private readonly playerTwo : Player;
 
     readonly floorHeight : number;
 
     constructor(game: HTMLElement) {
+        this.game = game;
 
         // Set floor height
-        this.floorHeight = 6;
+        this.floorHeight = 3.6;
 
         //////////////////////////////// Set scene ////////////////////////////////
         // Set background
         const background = document.createElement("background");
         const backgroundStyle = background.style;
-        backgroundStyle.backgroundColor = "blue";
+        backgroundStyle.backgroundImage = "url('docs/img/background.png')";
+        backgroundStyle.backgroundRepeat = "no-repeat";
+        backgroundStyle.backgroundSize = "100% 100%";
         backgroundStyle.width = "100%";
         backgroundStyle.height = "100%";
         backgroundStyle.position = "absolute";
@@ -24,7 +29,7 @@ class PlayScreen implements ScreenBase {
         const floorHeight = this.floorHeight;
         const floor = document.createElement("floor");
         const floorStyle = floor.style;
-        floorStyle.backgroundColor = "green";
+        //floorStyle.backgroundColor = "green";
         floorStyle.position = "absolute";
         floorStyle.width = "100vw";
         floorStyle.height = floorHeight.toString() + "vw";
@@ -34,8 +39,8 @@ class PlayScreen implements ScreenBase {
         // Create players
         const playerOne = <Player>document.createElement("player-element", {is: "player-element"});
         const playerTwo = <Player>document.createElement("player-element", {is: "player-element"});
-        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", "left", game);
-        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left","right", game);
+        playerOne.init(100, "KeyU", "KeyY","KeyW", "KeyA", "KeyD", "player-one", "right", "left", game, this);
+        playerTwo.init(100, "Numpad2", "Numpad1", "ArrowUp", "ArrowLeft", "ArrowRight", "player-two", "left","right", game, this);
 
         // Set start positions of players
         playerOne.position.y = floorHeight;
@@ -90,4 +95,29 @@ class PlayScreen implements ScreenBase {
 
         this.movePlayers()
     }
+
+
+    public gameOver(playerId : string) {
+        const gameOverText = document.createElement("div");
+
+        if (playerId == "player-one") {
+            gameOverText.innerText = "Player One Won!";
+        } else if (playerId == "player-two") {
+            gameOverText.innerText = "Player Two Won!";
+        } else {
+            gameOverText.innerText = "Player " + playerId + " Won!";
+        }
+        gameOverText.style.position = "absolute";
+        gameOverText.style.fontFamily = "arial";
+        gameOverText.style.fontWeight = "bold";
+        gameOverText.style.color = "red";
+        gameOverText.style.fontSize = "7vw";
+        gameOverText.style.width = "100vw";
+        gameOverText.style.height = "15vw";
+        gameOverText.style.top = "45vh";
+        gameOverText.style.textAlign = "center"
+
+        this.game.appendChild(gameOverText);
+    }
+
 }
